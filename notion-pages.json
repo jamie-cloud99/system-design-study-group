@@ -1,0 +1,10 @@
+{
+  "database_id": "36479d04-5c45-8044-a5d0-c00d9876544d",
+  "pages": {
+    "chapter-01-scale-from-zero-to-millions.md": "36479d04-5c45-819f-96dc-f7d59181ab86",
+    "chapter-02-back-of-the-envelope-estimation.md": "36479d04-5c45-81ac-b521-e1c2c7a703e9",
+    "chapter-03-system-design-interview-framework.md": "36479d04-5c45-8115-8e2d-eb81ee9f3da4",
+    "chapter-04-design-a-rate-limiter.md": "36479d04-5c45-8086-a561-dee3bc95bd29",
+    "chapter-05-consistent-hashing.md": "38079d04-5c45-8104-94ac-e0c2bc02ed66"
+  }
+}

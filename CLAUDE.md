@@ -8,11 +8,13 @@ A series of system design lecture notes in Traditional Chinese, aimed at fronten
 
 ## Chapter File Naming
 
-Files follow the pattern `chapter-NN-kebab-case-title.md`. Existing chapters:
+Files follow the pattern `chapter-NN-kebab-case-title.md`. Chapters written so far:
 - `chapter-01-scale-from-zero-to-millions.md` ✅
-- `chapter-02-back-of-the-envelope-estimation.md` ✅ (in progress)
+- `chapter-02-back-of-the-envelope-estimation.md` ✅
+- `chapter-03-system-design-interview-framework.md` ✅
+- `chapter-04-design-a-rate-limiter.md` ✅
 
-Chapters 03–15 are documented in README.md but not yet written.
+Chapters 05–15 are documented in README.md but not yet written.
 
 ## Lecture Note Format
 
@@ -35,4 +37,19 @@ Every chapter must follow this exact structure:
 
 ## The Three-Stage Curriculum Arc
 
-Chapters are grouped into three stages (see README.md), and later chapters reference earlier ones. When writing a new chapter, check what components were introduced in prior chapters and reference them by name rather than re-explaining them.
+Later chapters reference components introduced in earlier ones — re-explain by name only, don't re-introduce from scratch.
+
+**Stage 1 — Foundation (CH01–03):** How systems evolve, how to size them with numbers, how to structure a design interview.
+
+**Stage 2 — Building Blocks (CH04–08):** Reusable components for distributed systems:
+- CH04 Rate Limiter → CH05 Consistent Hashing → CH06 Key-Value Store → CH07 Unique ID Generator → CH08 URL Shortener
+
+**Stage 3 — Real Systems (CH09–15):** Composing the above into full product systems:
+- CH09–10 async background processing (crawlers, notifications)
+- CH11–12 social interaction at scale (news feed, chat)
+- CH13 latency-sensitive search (autocomplete)
+- CH14–15 binary media storage (YouTube, Google Drive)
+
+## Notion Sync
+
+`notion-pages.json` tracks the Notion page ID for each chapter file and the target database ID. It is written automatically by the `notion-push` skill — do not edit it by hand.
