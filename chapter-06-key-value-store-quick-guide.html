@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Key-Value Store 十分鐘快速版｜第六章</title>
+<style>
+  :root {
+    --paper: #f7f8f5;
+    --surface: #ffffff;
+    --ink: #17201b;
+    --muted: #5e6a63;
+    --line: #d8ddd9;
+    --problem: #b4473a;
+    --solution: #16745b;
+    --system: #245f9e;
+    --warning: #9a6a12;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", sans-serif;
+    line-height: 1.7;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 13rem minmax(0, 48rem);
+    gap: 3rem;
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 6rem;
+  }
+
+  nav.progress-nav {
+    position: sticky;
+    top: 1.5rem;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+  }
+
+  nav.progress-nav a {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 0.35rem 0.6rem;
+    border-left: 2px solid var(--line);
+  }
+
+  nav.progress-nav a[aria-current="location"] {
+    color: var(--system);
+    border-left-color: var(--system);
+    font-weight: 600;
+  }
+
+  main { min-width: 0; }
+
+  section { margin-bottom: 3.5rem; scroll-margin-top: 1.5rem; }
+
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0;
+    font-size: 0.75rem;
+    color: var(--problem);
+    font-weight: 700;
+    margin: 0 0 0.3rem;
+  }
+
+  h1 { font-size: 1.9rem; margin: 0 0 0.5rem; }
+  h2 { font-size: 1.4rem; margin: 0 0 1rem; }
+  h3 { font-size: 1.05rem; margin: 1.5rem 0 0.5rem; }
+
+  .subtitle { color: var(--muted); margin: 0 0 2rem; }
+
+  .concept-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+
+  .concept-grid section {
+    margin: 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 1rem 1.1rem;
+  }
+
+  .concept-grid section[aria-label="怎麼做"] { border-left: 4px solid var(--solution); }
+  .concept-grid section[aria-label="代價"] { border-left: 4px solid var(--warning); }
+
+  .concept-grid h4 {
+    margin: 0 0 0.4rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .takeaway {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--system);
+    border-radius: 0.5rem;
+    padding: 0.9rem 1.1rem;
+    margin: 1rem 0 0;
+  }
+
+  .term { color: var(--muted); font-size: 0.85rem; }
+
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.6rem;
+    padding: 1.2rem;
+    margin: 1rem 0;
+    overflow-x: auto;
+  }
+
+  .diagram figcaption {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.6rem;
+  }
+
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    font-size: 0.95rem;
+  }
+
+  .flow .box {
+    border: 1px solid var(--line);
+    border-radius: 0.4rem;
+    padding: 0.5rem 0.8rem;
+    background: var(--paper);
+  }
+
+  .flow .arrow { color: var(--muted); }
+
+  .replica-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .replica-row .node {
+    border: 1px solid var(--line);
+    border-radius: 0.4rem;
+    padding: 0.5rem 0.9rem;
+    background: var(--paper);
+  }
+
+  .replica-row .node.delayed {
+    border-color: var(--warning);
+    border-style: dashed;
+    color: var(--warning);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.92rem;
+  }
+
+  th, td {
+    border: 1px solid var(--line);
+    padding: 0.6rem 0.7rem;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th { background: var(--surface); }
+
+  details {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.8rem 1rem;
+    margin: 0.7rem 0;
+  }
+
+  summary { cursor: pointer; font-weight: 600; }
+  details p { margin: 0.6rem 0 0; color: var(--muted); }
+
+  .plain-steps {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  .plain-steps li + li { margin-top: 0.65rem; }
+
+  :focus-visible {
+    outline: 3px solid var(--system);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 780px) {
+    .shell { display: block; }
+    nav.progress-nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      flex-direction: row;
+      overflow-x: auto;
+      background: var(--paper);
+      padding: 0.6rem 0;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--line);
+    }
+    nav.progress-nav a {
+      border-left: none;
+      border-bottom: 2px solid var(--line);
+      white-space: nowrap;
+    }
+    nav.progress-nav a[aria-current="location"] {
+      border-left: none;
+      border-bottom-color: var(--system);
+    }
+    .concept-grid { grid-template-columns: 1fr; }
+    table { display: block; overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="progress-nav" aria-label="章節導覽">
+    <a href="#recap">Recap</a>
+    <a href="#partition">分片</a>
+    <a href="#replication">複製</a>
+    <a href="#consistency">一致性</a>
+    <a href="#conflict">衝突</a>
+    <a href="#recovery">修復</a>
+    <a href="#storage">儲存</a>
+  </nav>
+
+  <main>
+    <section id="recap" class="concept-section">
+      <p class="eyebrow">兩分鐘 Recap</p>
+      <h1>Key-Value Store 十分鐘快速版</h1>
+      <p class="subtitle">你已經用過它了——只是不知道它叫這個名字。</p>
+
+      <p>你在瀏覽器打過這行字：</p>
+      <div class="diagram">
+        <code>localStorage.setItem("token", "abc123")</code>
+        <figcaption>存一個 key，取一個 value——這就是 Key-Value Store 的全部操作。</figcaption>
+      </div>
+
+      <p>單機版本長這樣：</p>
+      <div class="diagram">
+        <div class="flow">
+          <span class="box">Client</span>
+          <span class="arrow">→</span>
+          <span class="box">Memory / Hash Map</span>
+          <span class="arrow">→</span>
+          <span class="box">Disk</span>
+        </div>
+        <figcaption>單機模型：客戶端直接讀寫記憶體裡的雜湊表，定期落到硬碟。</figcaption>
+      </div>
+
+      <p>這篇快速版只建立三個現實前提，接下來每個技術都是為了解決它們：</p>
+      <table>
+        <tr><th>現實限制</th><th>意思</th></tr>
+        <tr><td>資料會多到一台放不下</td><td>需要把資料分散到多台機器</td></tr>
+        <tr><td>機器一定會故障</td><td>單獨一份資料不安全</td></tr>
+        <tr><td>網路可能延遲或中斷</td><td>機器之間的溝通不可靠</td></tr>
+      </table>
+    </section>
+
+    <section id="partition" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>一台機器放不下，怎麼辦？</h2>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h4>怎麼做</h4>
+          <p>用一致性雜湊（<span class="term">Consistent Hashing</span>）把 key 分散放到多台節點，每台只負責環上的一段範圍。</p>
+        </section>
+        <section aria-label="代價">
+          <h4>代價</h4>
+          <p>資料位置變得不直覺，需要額外的路由邏輯才能找到 key 存在哪台機器。</p>
+        </section>
+      </div>
+      <p class="takeaway"><strong>一句話：</strong>放不下就分開放，但要有規則知道「誰放哪裡」。</p>
+    </section>
+
+    <section id="replication" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>分片之後，一台機器壞了資料就沒了</h2>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h4>怎麼做</h4>
+          <p>複製（<span class="term">Replication</span>）：同一份資料存到好幾台機器，其中一台掛了，其他台還在。</p>
+        </section>
+        <section aria-label="代價">
+          <h4>代價</h4>
+          <p>多了好幾份副本，寫入要通知的機器變多，也產生了「這幾份會不會不一樣」的新問題。</p>
+        </section>
+      </div>
+
+      <div class="diagram">
+        <div class="replica-row">
+          <span class="box">Client 寫入</span>
+          <span class="arrow">→</span>
+          <span class="node">Replica A ✓</span>
+          <span class="node">Replica B ✓</span>
+          <span class="node delayed">Replica C（延遲中）</span>
+        </div>
+        <figcaption>一次寫入送到三個副本，其中一台可能還沒跟上最新版本。</figcaption>
+      </div>
+
+      <p class="takeaway"><strong>一句話：</strong>多存幾份換來不怕故障，但換來「這幾份要不要一樣」的新麻煩。</p>
+    </section>
+
+    <section id="consistency" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>副本之間要多「一致」？</h2>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h4>怎麼做</h4>
+          <p>寫入時等幾份副本確認，讀取時就問幾份副本。重點是讓讀取的人至少碰到一個剛剛寫過的人。這套規則叫 Quorum，才會用 N、W、R 三個數字表示；它的公式是 <code>W + R &gt; N</code>。</p>
+        </section>
+        <section aria-label="代價">
+          <h4>代價</h4>
+          <p>W、R 設得越高，讀寫越慢；設得越低，越快但可能讀到舊資料——這就是 CAP（<span class="term">Consistency vs. Availability</span>）取捨。</p>
+        </section>
+      </div>
+      <p class="takeaway"><strong>一句話：</strong>讀取的人至少要碰到一個寫過的人，資料才靠得住。</p>
+    </section>
+
+    <section id="conflict" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>兩個人同時改同一筆資料，誰對？</h2>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h4>怎麼做</h4>
+          <p>先替每個版本留下「它經過哪些修改」的紀錄。一個版本包含另一個版本的全部修改時，它就是新版；兩邊各有不同修改時，就標記成衝突。這份版本紀錄叫向量時鐘（<span class="term">Vector Clock</span>）。</p>
+        </section>
+        <section aria-label="代價">
+          <h4>代價</h4>
+          <p>系統無法自動判斷誰對，衝突要交給應用層合併，或讓使用者選擇。</p>
+        </section>
+      </div>
+      <p class="takeaway"><strong>一句話：</strong>如果兩份版本互相都有對方沒看過的修改，代表它們是同時改出來的，不能亂選一個當贏家。</p>
+    </section>
+
+    <section id="recovery" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>節點掛了，系統怎麼知道？掛了之後又怎麼補回資料？</h2>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h4>怎麼做</h4>
+          <ol class="plain-steps">
+            <li><strong>先知道誰沒回應：</strong>機器互相交換近況，不需要一台中央監控。<span class="term">Gossip</span></li>
+            <li><strong>暫時請別台代收：</strong>等故障機器回來，再把資料還給它。<span class="term">Hinted Handoff</span></li>
+            <li><strong>只補不同的部分：</strong>先比摘要，再找出真正不同的資料區塊。<span class="term">Merkle Tree</span></li>
+          </ol>
+        </section>
+        <section aria-label="代價">
+          <h4>代價</h4>
+          <p>去中心化偵測需要幾輪傳播才能讓全部節點知道；代收機制和差異同步都增加了系統的實作複雜度。</p>
+        </section>
+      </div>
+      <p class="takeaway"><strong>一句話：</strong>沒有老大盯著大家，靠互相閒聊抓故障；代班的人先頂著，回來後再把東西還回去。</p>
+    </section>
+
+    <section id="storage" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>資料真的要落到硬碟時，怎麼兼顧寫入快跟讀取快？</h2>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h4>怎麼做</h4>
+          <ol class="plain-steps">
+            <li><strong>先記一筆：</strong>把寫入追加到日誌，避免當機後完全遺失。<span class="term">Commit Log</span></li>
+            <li><strong>先在記憶體整理：</strong>累積一批資料並排好順序。<span class="term">MemTable</span></li>
+            <li><strong>再整批寫進硬碟：</strong>減少硬碟到處跳著寫。<span class="term">SSTable / LSM-Tree</span></li>
+            <li><strong>讀取先排除：</strong>先跳過一定沒有目標 key 的檔案。<span class="term">Bloom Filter</span></li>
+          </ol>
+        </section>
+        <section aria-label="代價">
+          <h4>代價</h4>
+          <p>硬碟上會累積很多份 SSTable，需要額外的整理（compaction）程序，讀取有時要查好幾層才找到資料。</p>
+        </section>
+      </div>
+
+      <div class="diagram">
+        <div class="flow">
+          <span class="box">Commit Log</span>
+          <span class="arrow">→</span>
+          <span class="box">MemTable</span>
+          <span class="arrow">→</span>
+          <span class="box">Bloom Filter</span>
+          <span class="arrow">→</span>
+          <span class="box">SSTable</span>
+        </div>
+        <figcaption>寫入路徑一路向右追加；讀取路徑先查記憶體，再用 Bloom Filter 跳過不必要的硬碟查詢。</figcaption>
+      </div>
+
+      <p class="takeaway"><strong>一句話：</strong>硬碟只做連續寫入，讀取靠 Bloom Filter 先排除掉一定沒有的地方。</p>
+    </section>
+
+    <section id="summary" class="concept-section">
+      <p class="eyebrow">收尾</p>
+      <h2>問題、解法、代價</h2>
+      <table>
+        <tr><th>問題</th><th>解法</th><th>代價</th></tr>
+        <tr><td>一台放不下</td><td>分片</td><td>需要路由邏輯</td></tr>
+        <tr><td>機器會故障</td><td>複製</td><td>副本可能不一致</td></tr>
+        <tr><td>要多一致</td><td>Quorum（N/W/R）</td><td>讀寫速度與一致性互相取捨</td></tr>
+        <tr><td>同時修改</td><td>向量時鐘</td><td>衝突要交給應用層處理</td></tr>
+        <tr><td>節點故障</td><td>Gossip + Hinted Handoff + Merkle Tree</td><td>偵測與同步都需要時間、實作複雜</td></tr>
+        <tr><td>硬碟讀寫</td><td>LSM-Tree + Bloom Filter</td><td>需要額外整理，讀取可能查多層</td></tr>
+      </table>
+    </section>
+
+    <section id="check" class="concept-section">
+      <p class="eyebrow">自我檢查</p>
+      <h2>用自己的話回答三題</h2>
+
+      <details>
+        <summary>為什麼一致性雜湊解決了容量問題，卻帶來新的風險？</summary>
+        <p>因為資料只分散到多台機器，但每筆資料還是只有一份——任何一台機器故障，那份資料就永久遺失，所以還需要複製。</p>
+      </details>
+
+      <details>
+        <summary>為什麼資料有副本之後，系統反而多了一個問題？</summary>
+        <p>因為多台機器上的同一筆資料可能不是同一個版本——寫入到達各副本的時間不同，讀取時可能問到還沒更新的那一台。</p>
+      </details>
+
+      <details>
+        <summary>節點故障後，系統怎麼把缺失的資料補回來？</summary>
+        <p>短暫故障靠 Hinted Handoff：健康節點先代收資料，故障節點恢復後再還回去。長時間故障靠 Merkle Tree：用一層層 hash 比對快速找出差異區塊，只同步不一樣的部分，不用整份資料重新比對。</p>
+      </details>
+    </section>
+  </main>
+</div>
+
+<script>
+  document.documentElement.classList.add('js');
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('.progress-nav a'));
+  var byId = new Map(links.map(function (link) { return [link.hash.slice(1), link]; }));
+
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function (entries) {
+      var visible = entries
+        .filter(function (entry) { return entry.isIntersecting; })
+        .sort(function (a, b) { return b.intersectionRatio - a.intersectionRatio; })[0];
+      if (!visible) return;
+      links.forEach(function (link) { link.removeAttribute('aria-current'); });
+      var match = byId.get(visible.target.id);
+      if (match) match.setAttribute('aria-current', 'location');
+    }, { rootMargin: '-20% 0px -65%', threshold: [0, 0.2, 0.6] });
+
+    document.querySelectorAll('main > section[id]').forEach(function (section) {
+      observer.observe(section);
+    });
+  }
+</script>
+</body>
+</html>
