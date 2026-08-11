@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consistent Hashing 八分鐘快速版｜第五章</title>
+<style>
+  :root {
+    --paper: #f7f8f5;
+    --surface: #ffffff;
+    --ink: #17201b;
+    --muted: #5e6a63;
+    --line: #d8ddd9;
+    --problem: #b4473a;
+    --solution: #16745b;
+    --system: #245f9e;
+    --warning: #9a6a12;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", sans-serif;
+    line-height: 1.7;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 13rem minmax(0, 48rem);
+    gap: 3rem;
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 6rem;
+  }
+
+  nav.progress-nav {
+    position: sticky;
+    top: 2rem;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    border-left: 2px solid var(--line);
+    padding-left: 0.9rem;
+    height: max-content;
+  }
+
+  nav.progress-nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  nav.progress-nav a[aria-current="location"] {
+    color: var(--system);
+    background: rgba(36, 95, 158, 0.08);
+    font-weight: 600;
+  }
+
+  main { min-width: 0; }
+
+  .concept-section {
+    padding: 2.25rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .concept-section:last-of-type { border-bottom: none; }
+
+  h1 { font-size: 1.9rem; margin: 0 0 0.5rem; }
+  h2 { font-size: 1.5rem; margin: 0 0 1rem; }
+  h3 { font-size: 1.05rem; margin: 0 0 0.5rem; }
+
+  .eyebrow {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: var(--problem);
+    font-weight: 700;
+    margin: 0 0 0.4rem;
+  }
+
+  .meta {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .analogy {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--warning);
+    border-radius: 0.4rem;
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+  }
+
+  .concept-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin: 1.25rem 0;
+  }
+
+  .concept-grid section {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 1.1rem 1.2rem;
+  }
+
+  .concept-grid section[aria-label="怎麼做"] { border-top: 3px solid var(--solution); }
+  .concept-grid section[aria-label="代價"] { border-top: 3px solid var(--warning); }
+
+  .concept-grid p:first-child { margin-top: 0; }
+
+  .takeaway {
+    background: rgba(22, 116, 91, 0.08);
+    border-radius: 0.4rem;
+    padding: 0.85rem 1.1rem;
+    margin: 0;
+  }
+
+  ol.plain-steps {
+    margin: 0;
+    padding-left: 1.2rem;
+  }
+
+  ol.plain-steps li { margin-bottom: 0.4rem; }
+  ol.plain-steps li:last-child { margin-bottom: 0; }
+
+  pre.diagram {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.92rem;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  th { color: var(--muted); font-weight: 600; }
+
+  code {
+    background: rgba(23, 32, 27, 0.06);
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.25rem;
+    font-size: 0.9em;
+  }
+
+  details {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.8rem;
+  }
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  summary:focus-visible { outline: 3px solid var(--system); outline-offset: 3px; }
+
+  details p { margin: 0.7rem 0 0; color: var(--muted); }
+
+  :focus-visible {
+    outline: 3px solid var(--system);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .js .concept-section { animation: reveal 320ms ease-out both; }
+  }
+
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 780px) {
+    .shell { display: block; padding: 1.5rem 1rem 4rem; }
+    nav.progress-nav {
+      position: sticky;
+      top: 0;
+      flex-direction: row;
+      overflow-x: auto;
+      border-left: none;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+      padding: 0.6rem 0.2rem;
+      margin-bottom: 1.5rem;
+      white-space: nowrap;
+    }
+    .concept-grid { grid-template-columns: 1fr; }
+    table { display: block; overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="progress-nav" aria-label="章節導覽">
+    <a href="#recap">Recap</a>
+    <a href="#ring">Hash Ring</a>
+    <a href="#skew">分布不均</a>
+    <a href="#vnodes">虛擬節點</a>
+    <a href="#summary">總覽</a>
+    <a href="#check">自我檢查</a>
+  </nav>
+
+  <main>
+    <section id="recap" class="concept-section">
+      <p class="eyebrow">先建立熟悉的模型</p>
+      <h1>Consistent Hashing 八分鐘快速版</h1>
+      <p class="meta">第五章快速導覽・給第一次接觸一致性雜湊的前端工程師</p>
+
+      <p>要把資料分散到多台伺服器，最直覺的做法是：</p>
+      <pre class="diagram">serverIndex = hash(key) mod N</pre>
+
+      <p>N = 4 台伺服器時很正常：</p>
+      <pre class="diagram">key "user_001"  → hash = 12 → 12 mod 4 = 0 → Server 0
+key "user_002"  → hash = 47 → 47 mod 4 = 3 → Server 3
+key "user_003"  → hash = 30 → 30 mod 4 = 2 → Server 2</pre>
+
+      <p><strong>但只要一台伺服器掛掉，N 變成 3：</strong></p>
+      <pre class="diagram">key "user_001"  → 12 mod 3 = 0 → Server 0 ✓（沒變）
+key "user_002"  → 47 mod 3 = 2 → Server 2 ✗（原本 Server 3）
+key "user_003"  → 30 mod 3 = 0 → Server 0 ✗（原本 Server 2）</pre>
+
+      <p>N 一變，<strong>大多數 key 的目標伺服器全部跟著變。</strong>如果這些 key 是快取資料，代表大規模快取同時失效——所有請求瞬間打到資料庫，就像完全沒有快取一樣。</p>
+
+      <div class="analogy">🏗️ 想像圖書館把書按「書名首字母 mod 房間數」分放。多開一間房，所有書的位置全部要重算、重搬——哪怕只是多了一間房。</div>
+    </section>
+
+    <section id="ring" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>伺服器一增減，mod N 的結果就全盤改變</h2>
+      <p>我們需要一種分配方式，讓新增或移除伺服器時，<strong>只影響「鄰近的」資料</strong>，而不是全部重算。</p>
+
+      <div class="analogy">🏗️ 把城市畫成一個圓形，每個警察局負責「自己出發、順時針到下一個局」之間的區域。新增一個局，只有附近要重劃；撤掉一個，附近併給下一個——其他地方完全不受影響。</div>
+
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>怎麼做：Hash Ring</h3>
+          <ol class="plain-steps">
+            <li>把整個 hash 空間排成一個首尾相連的環。</li>
+            <li>伺服器名稱算 hash，放到環上的位置。</li>
+            <li>key 也算 hash，放到環上的位置。</li>
+            <li>從 key 的位置<strong>順時針走</strong>，第一個遇到的伺服器就是負責人。</li>
+          </ol>
+          <pre class="diagram">k1 → 順時針 → s1（負責 k1）
+k4 → 順時針 → s0（繞一圈回到 s0）
+
+新增 s4（在 s3、s0 之間）：
+  只有原本落在 s4 管轄範圍內的 key 搬移
+  其餘 key（k1, k2, k3）完全不受影響</pre>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>實作比 mod N 複雜：需要維護環上的位置資訊，查找負責伺服器要在環上做搜尋，不是單純的一次取餘數運算。</p>
+        </section>
+      </div>
+
+      <table>
+        <thead><tr><th>情境</th><th>傳統 hash（mod N）</th><th>Hash Ring</th></tr></thead>
+        <tbody>
+          <tr><td>新增一台伺服器</td><td>幾乎所有 key 重新分配</td><td>只有相鄰 key 搬移</td></tr>
+          <tr><td>移除一台伺服器</td><td>幾乎所有 key 重新分配</td><td>只有相鄰 key 搬移</td></tr>
+          <tr><td>實作複雜度</td><td>極簡單</td><td>稍複雜</td></tr>
+        </tbody>
+      </table>
+
+      <p class="takeaway"><strong>一句話：</strong>Hash Ring 把「伺服器增減的影響」從全部縮小到相鄰的一小段弧。</p>
+    </section>
+
+    <section id="skew" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>環上點太少，分布很難均勻</h2>
+      <p>Hash Ring 解決了「搬太多」，但伺服器在環上的位置是由 hash 值決定的，<strong>不保證均勻分布</strong>。只有 3 台伺服器時，很容易出現一台佔環上 70%、另一台只佔 10% 的情況。</p>
+
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>兩個具體問題</h3>
+          <ol class="plain-steps">
+            <li><strong>弧長不均等：</strong>伺服器位置隨機落在環上，管轄範圍可能天差地遠。</li>
+            <li><strong>Key 分布偏斜：</strong>就算弧長差不多，key 的 hash 值也可能天然集中在某一段。</li>
+          </ol>
+        </section>
+        <section aria-label="代價">
+          <h3>代價：熱點問題（Hotspot）</h3>
+          <p>某台伺服器承受不成比例的大量請求，其他台幾乎閒置。熱點伺服器容易先崩潰，一崩潰它負責的 key 又全部打到資料庫，引發連鎖故障。</p>
+        </section>
+      </div>
+
+      <p class="takeaway"><strong>一句話：</strong>環上的點太稀疏，隨機性不夠，就會有伺服器過載、有伺服器閒置。</p>
+    </section>
+
+    <section id="vnodes" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>怎麼讓環上的點分布得更均勻？</h2>
+      <p>解法很直覺：<strong>讓每台伺服器在環上放更多個點</strong>，稀疏就變密集，分布自然趨近均勻。</p>
+
+      <div class="analogy">🏗️ 連鎖超商不是只在城市裡開一家店，而是在各行政區都開分店。分店越多，每個區域到最近分店的距離就越平均。</div>
+
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>怎麼做：Virtual Nodes（虛擬節點）</h3>
+          <p>每台實體伺服器在環上放置多個虛擬節點，各自對應不同的 hash 位置：</p>
+          <pre class="diagram">實體伺服器 s0 → 虛擬節點：s0_0, s0_1, s0_2
+實體伺服器 s1 → 虛擬節點：s1_0, s1_1, s1_2</pre>
+          <p>key 找到的第一個虛擬節點，對應到那台實體伺服器。實務上通常每台放 100～200 個虛擬節點，是均勻度與管理成本的折衷點。</p>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <ol class="plain-steps">
+            <li>需要記錄「虛擬節點 → 實體伺服器」的映射，資料量隨節點數增加。</li>
+            <li>查找負責伺服器要在更多點之間搜尋，查找成本略微上升。</li>
+          </ol>
+        </section>
+      </div>
+
+      <p>伺服器增減時，因為每台伺服器的虛擬節點分散在環的各處，<strong>影響會被打散到多台伺服器</strong>，而不是集中在相鄰那一台。</p>
+
+      <p class="takeaway"><strong>一句話：</strong>虛擬節點把「一台伺服器」拆成環上的多個代理點，分布均勻，增減的衝擊也被分散掉。</p>
+    </section>
+
+    <section id="summary" class="concept-section">
+      <p class="eyebrow">收尾</p>
+      <h2>問題、解法、代價一覽</h2>
+      <table>
+        <thead><tr><th>問題</th><th>解法</th><th>代價</th></tr></thead>
+        <tbody>
+          <tr><td>伺服器增減 → mod N 全盤改變</td><td>Hash Ring：環形空間 + 順時針找節點</td><td>實作比 mod N 複雜</td></tr>
+          <tr><td>環上點太少 → 分布不均、熱點</td><td>Virtual Nodes：每台伺服器放多個代理點</td><td>映射資料變大、查找成本略增</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="check" class="concept-section">
+      <p class="eyebrow">自我檢查</p>
+      <h2>用自己的話解釋看看</h2>
+
+      <details>
+        <summary>為什麼傳統 hash mod N 在伺服器數量改變時會造成大規模快取失效？</summary>
+        <p>因為 N 一變，幾乎每個 key 算出來的 mod 結果都不同，導致原本快取的 key 全部對應到「新」的伺服器，等於瞬間全部快取未命中。</p>
+      </details>
+
+      <details>
+        <summary>Hash Ring 為什麼能把伺服器增減的影響限制在一小段範圍？</summary>
+        <p>因為伺服器和 key 都固定在環上的位置，只有「被新增或移除的伺服器所管轄的那段弧」需要重新分配，環上其他地方的對應關係完全不受影響。</p>
+      </details>
+
+      <details>
+        <summary>已經有 Hash Ring 了，為什麼還需要 Virtual Nodes？</summary>
+        <p>因為 Hash Ring 上只放幾個真實伺服器時，位置是隨機的，弧長可能極不均等，容易出現熱點。Virtual Nodes 讓每台伺服器在環上有多個代理點，稀疏變密集，分布才會真正趨近均勻。</p>
+      </details>
+    </section>
+  </main>
+</div>
+
+<script>
+  document.documentElement.classList.add('js');
+
+  const links = [...document.querySelectorAll('.progress-nav a')];
+  const byId = new Map(links.map(link => [link.hash.slice(1), link]));
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries.filter(entry => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      links.forEach(link => link.removeAttribute('aria-current'));
+      byId.get(visible.target.id)?.setAttribute('aria-current', 'location');
+    }, { rootMargin: '-20% 0px -65%', threshold: [0, 0.2, 0.6] });
+
+    document.querySelectorAll('main > section[id]').forEach(section => observer.observe(section));
+  }
+</script>
+</body>
+</html>
