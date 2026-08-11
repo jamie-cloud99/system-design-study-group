@@ -5,6 +5,7 @@
     "chapter-02-back-of-the-envelope-estimation.md": "36479d04-5c45-81ac-b521-e1c2c7a703e9",
     "chapter-03-system-design-interview-framework.md": "36479d04-5c45-8115-8e2d-eb81ee9f3da4",
     "chapter-04-design-a-rate-limiter.md": "36479d04-5c45-8086-a561-dee3bc95bd29",
-    "chapter-05-consistent-hashing.md": "38079d04-5c45-8104-94ac-e0c2bc02ed66"
+    "chapter-05-consistent-hashing.md": "38079d04-5c45-8104-94ac-e0c2bc02ed66",
+    "chapter-06-design-a-key-value-store.md": "3b879d04-5c45-81ee-a757-e165419931d9"
   }
 }
