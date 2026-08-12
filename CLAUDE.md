@@ -53,3 +53,33 @@ Later chapters reference components introduced in earlier ones — re-explain by
 ## Notion Sync
 
 `notion-pages.json` tracks the Notion page ID for each chapter file and the target database ID. It is written automatically by the `notion-push` skill — do not edit it by hand.
+
+## Quick-Guide HTML Artifacts
+
+Alongside a written chapter, a standalone HTML "quick guide" can be built as a faster (8–10 minute) companion read. Existing examples: `chapter-05-consistent-hashing-quick-guide.html`, `chapter-06-key-value-store-quick-guide.html`, `chapter-07-unique-id-generator-quick-guide.html`.
+
+**File:** `chapter-NN-topic-quick-guide.html`, single self-contained file (inline CSS + vanilla JS, no build step, no external dependencies, no network calls). The original chapter `.md` file is never modified.
+
+**Reuse the shared design system verbatim** for series consistency — same CSS custom properties, layout, and script every time:
+
+```css
+:root {
+  --paper: #f7f8f5; --surface: #ffffff; --ink: #17201b; --muted: #5e6a63;
+  --line: #d8ddd9; --problem: #b4473a; --solution: #16745b;
+  --system: #245f9e; --warning: #9a6a12;
+}
+```
+
+- `.shell` CSS Grid: sticky sidebar nav on desktop, horizontal-scroll nav on mobile (`@media (max-width: 780px)`).
+- Each concept section follows: `.eyebrow` (現在的問題) → `<h2>` → `.concept-grid` with `aria-label="怎麼做"` / `aria-label="代價"` panels → `.takeaway` one-liner.
+- Diagrams as `<pre class="diagram">` ASCII blocks; comparison tables as plain `<table>`.
+- Ends with a problem/solution/cost summary `<table>` and 3 `<details>`/`<summary>` self-check questions (collapsed by default).
+- Nav active-state via `IntersectionObserver` (guarded by `'IntersectionObserver' in window`), `:focus-visible` outlines, `prefers-reduced-motion`-guarded reveal animation, `js` class added only via script for progressive enhancement.
+
+**Verification before publishing:**
+1. `shasum` the original chapter file before and after — must be unchanged; `git diff` on it and on `notion-pages.json` must be empty.
+2. `rg` check that all section IDs, the `<details>` blocks, and `IntersectionObserver` are present; confirm no `https?://` or external `src`/`href` references.
+3. Extract the inline `<script>` and run `node --check` on it.
+4. Serve locally (`python3 -m http.server`, since Playwright MCP blocks `file://`) and check desktop (1440×900) and mobile (390×844) screenshots, plus a click-to-expand test on one `<details>`.
+5. Commit only the new HTML file (and a design spec if one was written) — never `notion-pages.json`.
+6. Publish via the `Artifact` tool for a shareable link.

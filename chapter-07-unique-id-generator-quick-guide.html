@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unique ID Generator 十分鐘快速版｜第七章</title>
+<style>
+  :root {
+    --paper: #f7f8f5;
+    --surface: #ffffff;
+    --ink: #17201b;
+    --muted: #5e6a63;
+    --line: #d8ddd9;
+    --problem: #b4473a;
+    --solution: #16745b;
+    --system: #245f9e;
+    --warning: #9a6a12;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", sans-serif;
+    line-height: 1.7;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 13rem minmax(0, 48rem);
+    gap: 3rem;
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 6rem;
+  }
+
+  nav.progress-nav {
+    position: sticky;
+    top: 2rem;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    border-left: 2px solid var(--line);
+    padding-left: 0.9rem;
+    height: max-content;
+  }
+
+  nav.progress-nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  nav.progress-nav a[aria-current="location"] {
+    color: var(--system);
+    background: rgba(36, 95, 158, 0.08);
+    font-weight: 600;
+  }
+
+  main { min-width: 0; }
+
+  .concept-section {
+    padding: 2.25rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .concept-section:last-of-type { border-bottom: none; }
+
+  h1 { font-size: 1.9rem; margin: 0 0 0.5rem; }
+  h2 { font-size: 1.5rem; margin: 0 0 1rem; }
+  h3 { font-size: 1.05rem; margin: 0 0 0.5rem; }
+
+  .eyebrow {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: var(--problem);
+    font-weight: 700;
+    margin: 0 0 0.4rem;
+  }
+
+  .meta {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .analogy {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--warning);
+    border-radius: 0.4rem;
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+  }
+
+  .concept-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin: 1.25rem 0;
+  }
+
+  .concept-grid section {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 1.1rem 1.2rem;
+  }
+
+  .concept-grid section[aria-label="怎麼做"] { border-top: 3px solid var(--solution); }
+  .concept-grid section[aria-label="代價"] { border-top: 3px solid var(--warning); }
+
+  .concept-grid p:first-child { margin-top: 0; }
+
+  .takeaway {
+    background: rgba(22, 116, 91, 0.08);
+    border-radius: 0.4rem;
+    padding: 0.85rem 1.1rem;
+    margin: 0;
+  }
+
+  ol.plain-steps {
+    margin: 0;
+    padding-left: 1.2rem;
+  }
+
+  ol.plain-steps li { margin-bottom: 0.4rem; }
+  ol.plain-steps li:last-child { margin-bottom: 0; }
+
+  pre.diagram {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.92rem;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  th { color: var(--muted); font-weight: 600; }
+
+  code {
+    background: rgba(23, 32, 27, 0.06);
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.25rem;
+    font-size: 0.9em;
+  }
+
+  details {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.8rem;
+  }
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  summary:focus-visible { outline: 3px solid var(--system); outline-offset: 3px; }
+
+  details p { margin: 0.7rem 0 0; color: var(--muted); }
+
+  :focus-visible {
+    outline: 3px solid var(--system);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .js .concept-section { animation: reveal 320ms ease-out both; }
+  }
+
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 780px) {
+    .shell { display: block; padding: 1.5rem 1rem 4rem; }
+    nav.progress-nav {
+      position: sticky;
+      top: 0;
+      flex-direction: row;
+      overflow-x: auto;
+      border-left: none;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+      padding: 0.6rem 0.2rem;
+      margin-bottom: 1.5rem;
+      white-space: nowrap;
+    }
+    .concept-grid { grid-template-columns: 1fr; }
+    table { display: block; overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="progress-nav" aria-label="章節導覽">
+    <a href="#recap">Recap</a>
+    <a href="#candidates">候選方案</a>
+    <a href="#snowflake">Snowflake 結構</a>
+    <a href="#generation">怎麼產生一筆</a>
+    <a href="#failures">容量與故障</a>
+    <a href="#modern">現代選擇</a>
+    <a href="#summary">總覽</a>
+    <a href="#check">自我檢查</a>
+  </nav>
+
+  <main>
+    <section id="recap" class="concept-section">
+      <p class="eyebrow">先建立熟悉的模型</p>
+      <h1>Unique ID Generator 十分鐘快速版</h1>
+      <p class="meta">第七章快速導覽・給第一次接觸分散式唯一 ID 生成器的前端工程師</p>
+
+      <p>最直覺的做法是讓資料庫自己遞增：</p>
+      <pre class="diagram">INSERT 一筆訂單 → 資料庫回傳 id = 101, 102, 103...</pre>
+
+      <p>單台資料庫時完全沒問題，簡單又好懂。但當多個服務、多個分片、甚至多個機房同時要建立資料時，<strong>大家不能都排隊去問同一台資料庫要下一個號碼是多少</strong>——那台資料庫會變成全系統的瓶頸與單點。</p>
+
+      <p>本章要找一個能讓多台機器「各自」產生 ID，卻仍然滿足以下五個條件的方案：</p>
+      <table>
+        <thead><tr><th>需求</th><th>為什麼需要</th></tr></thead>
+        <tbody>
+          <tr><td>全球唯一</td><td>不同機器不能產生相同 ID</td></tr>
+          <tr><td>64-bit 整數</td><td>儲存與索引比長字串精簡</td></tr>
+          <tr><td>趨勢遞增</td><td>新資料大致排在舊資料後面，利於索引</td></tr>
+          <tr><td>低延遲、高吞吐</td><td>建立資料不能都卡在遠端發號服務</td></tr>
+          <tr><td>水平擴展</td><td>加節點就能提高整體產生能力</td></tr>
+        </tbody>
+      </table>
+
+      <div class="analogy">🏗️ 使用者按下「建立訂單」時，前端會先用一個 temporary ID（例如 <code>temp_abc123</code>）更新畫面，等後端回傳 permanent ID 才替換掉。這兩種 ID 責任完全不同：temporary ID 只要畫面上不撞名，permanent ID 卻要在跨機房、多年後仍唯一指向同一筆資料。</div>
+    </section>
+
+    <section id="candidates" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>所有寫入依賴同一個發號點，該怎麼分散？</h2>
+      <p>幾種直覺方案輪流嘗試，卻總是少一塊：</p>
+
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>多主資料庫各自遞增</h3>
+          <p>兩台資料庫各自設定不同起點、步長都是 2：DB A 發 1, 3, 5...；DB B 發 2, 4, 6...，不會重複。</p>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>新增第三台要把步長全部改成 3；而且號碼大小不再代表真正的建立時間先後。</p>
+        </section>
+      </div>
+
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>UUIDv4</h3>
+          <p>每台機器自己產生，正確使用時碰撞機率極低，完全不用問中央服務。</p>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>128-bit，超過本題限制；內容隨機，無法依 ID 排時間，也拖累有序索引的效能。</p>
+        </section>
+      </div>
+
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>Ticket Server（集中發號服務）</h3>
+          <p>應用伺服器改向一個專門的中央服務領號，號碼短、有序。</p>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>中央服務本身還是瓶頸；部署多台高可用後，又要協調彼此的號碼範圍。</p>
+        </section>
+      </div>
+
+      <p class="takeaway"><strong>一句話：</strong>每個方案都在「不用中央協調」「64-bit」「趨勢遞增」三者中至少放棄一項——我們缺的是能同時滿足三者的組合。</p>
+    </section>
+
+    <section id="snowflake" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>怎麼讓每台機器不必逐筆協調，就能各自產生唯一 ID？</h2>
+      <p>Snowflake 的想法是：<strong>把「時間、機器身分、同一瞬間的順序」直接編進 ID 本身</strong>，機器只要知道自己是誰、現在幾點，就能獨立組出答案。</p>
+
+      <div class="analogy">🏗️ 物流包裹標籤同時記錄「哪天處理、哪個物流中心、哪條產線、這一秒的第幾件」。只要物流中心與產線編號不重複，寄件時完全不用打電話問總公司下一號是多少。</div>
+
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>把 64 bits 切成四段</h3>
+          <pre class="diagram"> 1 bit    41 bits         5 bits      5 bits     12 bits
+┌────┬────────────────┬───────────┬───────────┬────────────┐
+│ 0  │ timestamp (ms) │ datacenter│  machine  │  sequence  │
+└────┴────────────────┴───────────┴───────────┴────────────┘</pre>
+          <ol class="plain-steps">
+            <li><strong>1 bit</strong>：固定 0，維持非負整數。</li>
+            <li><strong>41 bits</strong>：現在時間減自訂起點（Custom Epoch），約可用 69.7 年。</li>
+            <li><strong>5 + 5 bits</strong>：32 個機房 × 32 台機器 = 1,024 個生成節點。</li>
+            <li><strong>12 bits</strong>：同一台機器、同一毫秒內的序號，0～4,095。</li>
+          </ol>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>Bit 分配不是固定答案：節點少但單機流量高，就該把 node bits 讓給 sequence。每個欄位都要先算節點數、峰值吞吐與系統壽命再決定。</p>
+        </section>
+      </div>
+
+      <div class="analogy">⚠️ <strong>前端注意：</strong>JavaScript <code>Number</code> 只能安全表示到 <code>2^53 - 1</code>，API 通常把 Snowflake ID 當字串傳回，不要轉成 <code>Number</code>；組合或運算 ID 要用 <code>BigInt</code>。</div>
+
+      <p class="takeaway"><strong>一句話：</strong>Snowflake 把「誰、何時、第幾個」都塞進 64 bits，機器只要管好自己的欄位，就不必逐筆問中央要號碼。</p>
+    </section>
+
+    <section id="generation" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>知道每段放什麼，生成器要怎麼實際運作？</h2>
+      <p>每個生成程序記住兩個狀態：<code>lastTimestamp</code>（上次用過的毫秒）與 <code>sequence</code>（該毫秒已發到第幾號）。這兩個狀態的讀取與更新必須串行或原子化，否則並行請求可能拿到相同 sequence。</p>
+
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>收到請求時的三條路</h3>
+          <pre class="diagram">currentTimestamp > lastTimestamp
+  → 進入新的一毫秒，sequence 歸零
+
+currentTimestamp = lastTimestamp
+  → sequence + 1
+  → 超過 4,095 就等下一毫秒或回傳過載
+
+currentTimestamp < lastTimestamp
+  → 時鐘回撥，進入保護流程，不能照常產生</pre>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>不是完全零協調：部署時仍要分配不重複的 datacenter / machine，只是協調頻率從「每一筆 ID」降成「節點變動時」才需要一次。</p>
+        </section>
+      </div>
+
+      <p>例如節點位於 <code>datacenter=3, machine=7</code>，同一毫秒收到三個請求：</p>
+      <pre class="diagram">請求 A：timestamp=T,   dc=3, machine=7, sequence=0
+請求 B：timestamp=T,   dc=3, machine=7, sequence=1
+請求 C：timestamp=T,   dc=3, machine=7, sequence=2
+下一毫秒：timestamp=T+1, dc=3, machine=7, sequence=0</pre>
+      <p>另一台 <code>machine=8</code> 即使同時從 sequence 0 開始，machine 欄位不同，完整 ID 依然不會重複。</p>
+
+      <p class="takeaway"><strong>一句話：</strong>Snowflake 只保證「趨勢遞增」，不是嚴格連號；時鐘差異與 node bits 都會影響順序，不能當跨節點的精確排序。</p>
+    </section>
+
+    <section id="failures" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>拿掉中央協調後，換來每個節點要對自己的時間與身分負責</h2>
+
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>三個實際邊界</h3>
+          <ol class="plain-steps">
+            <li><strong>時鐘回撥：</strong>NTP 校時或機器搬移可能讓系統時間比 <code>lastTimestamp</code> 小，若直接沿用，可能重複發出已用過的 timestamp + sequence。</li>
+            <li><strong>sequence 用完：</strong>同一毫秒內第 4,097 個請求不能安靜繞回 0，否則撞號。</li>
+            <li><strong>節點身分重複：</strong>兩台機器誤用相同 <code>(datacenter, machine)</code>，會共用同一個 ID 空間。</li>
+          </ol>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>處理方向都要在「延遲」與「可用性」之間取捨：小幅回撥可以等待，大幅回撥該直接拒絕產生並告警，比事後修復重複 ID 便宜得多。</p>
+        </section>
+      </div>
+
+      <table>
+        <thead><tr><th>問題</th><th>可能後果</th><th>處理方向</th></tr></thead>
+        <tbody>
+          <tr><td>時鐘回撥</td><td>撞號、排序倒退</td><td>短暫等待、拒絕服務、受保護邏輯時間</td></tr>
+          <tr><td>sequence 耗盡</td><td>同毫秒內撞號</td><td>等下一毫秒或回傳過載，不可歸零</td></tr>
+          <tr><td>節點身分重複</td><td>不同節點共用命名空間</td><td>唯一分配、租約、啟動衝突檢查</td></tr>
+        </tbody>
+      </table>
+
+      <p class="takeaway"><strong>一句話：</strong>ID 也不是安全憑證——Snowflake 的 timestamp 可被解析，若不能透露時間或業務量，要另外提供不透明的 public ID。</p>
+    </section>
+
+    <section id="modern" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>如果不受 64-bit 限制，還有其他選擇嗎？</h2>
+      <p>現在也有標準化、可排序、不必管理 machine ID 的方案：</p>
+
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>UUIDv7 / ULID</h3>
+          <p><strong>UUIDv7</strong>：128-bit，高位放 Unix 毫秒時間，其餘保留 UUID 生態相容性。<br><strong>ULID</strong>：128-bit，前 48 bits 是時間，26 個字元、字典序可排序，適合日誌與 URL。</p>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>都不需要 machine ID，但也都不是 64-bit；同一毫秒是否單調仍取決於生成器實作，不能當成跨節點的嚴格順序。</p>
+        </section>
+      </div>
+
+      <table>
+        <thead><tr><th>方案</th><th>大小</th><th>時間排序</th><th>管理節點 ID</th><th>適合情境</th></tr></thead>
+        <tbody>
+          <tr><td>Snowflake</td><td>64-bit 整數</td><td>趨勢遞增</td><td>要</td><td>精簡、高吞吐的內部主鍵</td></tr>
+          <tr><td>UUIDv7</td><td>128-bit UUID</td><td>時間高位</td><td>不要</td><td>標準 UUID、跨語言生態</td></tr>
+          <tr><td>ULID</td><td>128-bit、26 字元</td><td>字典序</td><td>不要</td><td>可讀文字、日誌與 URL</td></tr>
+        </tbody>
+      </table>
+
+      <p class="takeaway"><strong>一句話：</strong>64-bit 是硬限制才選 Snowflake；已有 UUID 生態選 UUIDv7；重視文字與字典序評估 ULID——先列需求，再選最簡單的格式。</p>
+    </section>
+
+    <section id="summary" class="concept-section">
+      <p class="eyebrow">收尾</p>
+      <h2>問題、解法、代價一覽</h2>
+      <table>
+        <thead><tr><th>問題</th><th>解法</th><th>代價</th></tr></thead>
+        <tbody>
+          <tr><td>單一資料庫發號 → 瓶頸與單點</td><td>多主 DB / UUIDv4 / Ticket Server</td><td>擴縮複雜、超過 64-bit，或中央服務仍是瓶頸</td></tr>
+          <tr><td>候選方案總是少一塊</td><td>Snowflake：時間 + 節點身分 + 序號編進 64 bits</td><td>要管理節點身分與時鐘回撥</td></tr>
+          <tr><td>不受 64-bit 限制時的選擇</td><td>UUIDv7（標準生態）／ULID（文字排序）</td><td>128-bit、同毫秒單調性依實作而定</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="check" class="concept-section">
+      <p class="eyebrow">自我檢查</p>
+      <h2>用自己的話解釋看看</h2>
+
+      <details>
+        <summary>為什麼多主資料庫各自遞增，仍不能保證全域時間排序？</summary>
+        <p>因為 ID 反映的是各自資料庫的數列進度，不是真實建立時間。DB A 可能先發出比 DB B 更大的號碼，雖然不會重複，但號碼大小不再等於時間先後。</p>
+      </details>
+
+      <details>
+        <summary>Snowflake 為什麼同時需要 machine ID 和 sequence，缺一個會怎樣？</summary>
+        <p>machine ID 區分同一毫秒的不同節點，sequence 區分同一節點、同一毫秒的不同請求。少了 machine ID，不同機器同毫秒可能撞號；少了 sequence，同一機器同毫秒的多筆請求就沒辦法互相區分。</p>
+      </details>
+
+      <details>
+        <summary>時鐘回撥時，為什麼「等待」和「拒絕產生」都是合理選擇，該怎麼判斷?</summary>
+        <p>回撥幅度小（幾毫秒）可以短暫等待系統時間追上，代價是增加一點延遲；回撥幅度大或狀態不明時應直接拒絕產生並告警，讓流量切到健康節點，因為重複 ID 造成的資料錯誤，通常比短暫不可用更難修復。</p>
+      </details>
+    </section>
+  </main>
+</div>
+
+<script>
+  document.documentElement.classList.add('js');
+
+  const links = [...document.querySelectorAll('.progress-nav a')];
+  const byId = new Map(links.map(link => [link.hash.slice(1), link]));
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries.filter(entry => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      links.forEach(link => link.removeAttribute('aria-current'));
+      byId.get(visible.target.id)?.setAttribute('aria-current', 'location');
+    }, { rootMargin: '-20% 0px -65%', threshold: [0, 0.2, 0.6] });
+
+    document.querySelectorAll('main > section[id]').forEach(section => observer.observe(section));
+  }
+</script>
+</body>
+</html>
