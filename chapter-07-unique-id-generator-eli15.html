@@ -203,6 +203,31 @@
     line-height: 1.8;
   }
 
+  .scene-context {
+    display: grid;
+    gap: var(--space-sm);
+    margin: var(--space-xl) 0;
+    padding: var(--space-lg) 0;
+    border-top: 1px solid #aebbb3;
+    border-bottom: 1px solid #aebbb3;
+  }
+
+  .context-label {
+    margin: 0;
+    color: var(--solution);
+    font-size: 0.75rem;
+    font-weight: 850;
+  }
+
+  .context-story p {
+    max-width: 42rem;
+    margin-bottom: var(--space-sm);
+  }
+
+  .context-story p:last-child {
+    margin-bottom: 0;
+  }
+
   .meta-line {
     display: flex;
     flex-wrap: wrap;
@@ -857,6 +882,11 @@
   }
 
   @media (min-width: 42rem) {
+    .scene-context {
+      grid-template-columns: 8.5rem minmax(0, 1fr);
+      gap: var(--space-lg);
+    }
+
     .definition-pair {
       grid-template-columns: 1fr 1fr;
     }
@@ -969,6 +999,14 @@
       <h1>小明按下購買，誰替這筆訂單取名字？</h1>
       <p class="lead">這個「名字」會一路跟著付款、出貨、退款與客服。它不能只在畫面上看起來不重複，而是幾年後還要準確指向同一筆資料。</p>
 
+      <div class="scene-context">
+        <p class="context-label">此刻發生什麼</p>
+        <div class="context-story">
+          <p>晚上 8 點整，小明在手機上搶到一雙限量球鞋。他按下「購買」後，網路還要花一點時間把訂單送到伺服器；這時後端尚未建立資料，也還沒有永久訂單 ID。</p>
+          <p>如果畫面什麼都不做，小明會以為按鈕沒反應而連按好幾次。所以前端先建立 <code>temp_order_8f3</code> 顯示「處理中」，等後端真的建立訂單後，再換成永久 ID。</p>
+        </div>
+      </div>
+
       <div class="order-receipt" aria-label="球鞋訂單追蹤單">
         <div class="receipt-top">
           <span>ONE PAIR STORE</span>
@@ -1034,6 +1072,14 @@
       <h2>為什麼多幾台伺服器，流水號反而變難？</h2>
       <p class="lead">限量商品開賣時，一台伺服器吃不下所有請求。Load Balancer 會把買家分給 A、B、C 三台 Order Server。</p>
 
+      <div class="scene-context">
+        <p class="context-label">此刻發生什麼</p>
+        <div class="context-story">
+          <p>小明的請求被送到 Server A，小美的送到 Server B，阿哲的送到 Server C。三台機器同時工作，彼此不會先交換「我準備發幾號」。</p>
+          <p>假設三台記憶體裡最後看到的號碼都是 100，它們就會在同一瞬間各自算出 <strong>100 + 1 = 101</strong>。問題不是加法算錯，而是每台機器都只知道自己的世界。</p>
+        </div>
+      </div>
+
       <div class="system-route" aria-label="一萬名買家經負載平衡器分流到三台訂單伺服器">
         <div class="buyer-cloud" aria-hidden="true">
           <span>1</span><span>2</span><span>3</span><span>…</span><span>10k</span>
@@ -1074,12 +1120,20 @@
       <h2>每個方法都解一題，為什麼還不夠？</h2>
       <p class="lead">沒有一種 ID 永遠最好。下面每次嘗試都值得用，只是它們適合的系統大小與限制不同。</p>
 
+      <div class="scene-context">
+        <p class="context-label">此刻發生什麼</p>
+        <div class="context-story">
+          <p>撞號事故後，訂單團隊先寫下這次真正需要的條件：三台機器不能重複、建立訂單不能多等一次遠端來回、ID 要放得進 64-bit，而且新訂單最好大致排在舊訂單後面。</p>
+          <p>接下來四次嘗試都沿用同一筆購買流程。每次只改「永久 ID 在哪裡、用什麼規則產生」，看它解掉哪個問題，又留下什麼新麻煩。</p>
+        </div>
+      </div>
+
       <div class="attempts">
         <article class="attempt-row">
           <div class="attempt-number">1</div>
           <div class="attempt-copy">
             <h3>Database auto increment</h3>
-            <p>所有訂單交給同一台資料庫加一：101、102、103。它簡單、短、好查。</p>
+            <p>團隊先取消 A、B、C 的本機計數器。每台收到訂單後都直接 INSERT，改由同一台主要資料庫發出 101、102、103。它簡單、短、好查。</p>
             <p>但所有寫入都依賴同一個發號點；跨資料庫或跨區後，它會變成瓶頸與單點。</p>
           </div>
           <div class="attempt-fit"><strong>仍然適合：</strong><br>單一資料庫的小型後台。</div>
@@ -1089,7 +1143,7 @@
           <div class="attempt-number">2</div>
           <div class="attempt-copy">
             <h3>多主奇偶號</h3>
-            <p>DB A 發奇數，DB B 發偶數，兩邊可以同時工作，也不會重複。</p>
+            <p>為了不讓所有訂單等同一台資料庫，台北 DB 只發奇數，高雄 DB 只發偶數。兩邊可以同時工作，也不會重複。</p>
             <p>加第三台時要重排規則；而且號碼大小不再可靠代表全域建立順序。</p>
           </div>
           <div class="attempt-fit"><strong>解到：</strong><br>兩個固定發號點分流。</div>
@@ -1099,7 +1153,7 @@
           <div class="attempt-number">3</div>
           <div class="attempt-copy">
             <h3>UUIDv4</h3>
-            <p>每台伺服器都能自己產生一長串隨機 ID，不必詢問中央服務。</p>
+            <p>團隊再把資料庫發號也拿掉，讓每台 Order Server 自己抽出一個 128-bit 隨機 ID。小明的訂單不必先等任何中央服務。</p>
             <p>它是 128-bit、主要為隨機資料；不符合這次「精簡 64-bit、能大致按時間排」的需求。</p>
           </div>
           <div class="attempt-fit"><strong>仍然適合：</strong><br>重視本地產生與不透明 ID。</div>
@@ -1109,7 +1163,7 @@
           <div class="attempt-number">4</div>
           <div class="attempt-copy">
             <h3>Ticket Server</h3>
-            <p>架一個專門發號的中央服務，所有 Order Server 都向它領取短而有序的號碼。</p>
+            <p>團隊想保留短而有序的數字，於是新增一台專門的發號服務。A、B、C 建立訂單前，都先向它領取下一號。</p>
             <p>訂單又要排隊等同一個服務；做成多台高可用後，發號機彼此還是要協調範圍。</p>
           </div>
           <div class="attempt-fit"><strong>解到：</strong><br>統一發出短、有序的 ID。</div>
@@ -1133,6 +1187,14 @@
       <p class="scene-label">Scene 04 · 把答案寫進 ID 本身</p>
       <h2>Snowflake 怎麼讓三台機器各自發號？</h2>
       <p class="lead">把它想成包裹標籤：不是只寫流水號，而是同時記下「何時處理、哪條產線處理、這一瞬間的第幾件」。</p>
+
+      <div class="scene-context">
+        <p class="context-label">此刻發生什麼</p>
+        <div class="context-story">
+          <p>團隊發現，A、B、C 不一定要搶同一個「全公司下一號」。只要每筆訂單能回答三題：<strong>哪一毫秒建立、哪台機器建立、該機器在這毫秒已建立第幾筆</strong>，完整組合就能不同。</p>
+          <p>例如 20:00:00.120，Server A 同時收到小明與小美兩筆訂單，就用 sequence 0、1；Server B 也用 sequence 0 沒關係，因為它的 machine 欄位不同。</p>
+        </div>
+      </div>
 
       <div class="parcel-label" aria-label="Snowflake 像包裹標籤的三段資訊">
         <div class="parcel-head">
@@ -1209,6 +1271,14 @@
       <h2>時鐘倒退或一毫秒太忙，會發生什麼？</h2>
       <p class="lead">Snowflake 把中央服務的壓力拆給每個節點，也把責任一起拆過去：每台機器必須管好自己的時間、身分與序號。</p>
 
+      <div class="scene-context">
+        <p class="context-label">此刻發生什麼</p>
+        <div class="context-story">
+          <p>隔天，Server 7 剛發完 <code>20:00:00.500</code> 的訂單 ID，NTP 校時卻把系統時間調回 <code>20:00:00.480</code>。如果生成器相信倒退後的時間，就可能再次走進昨天已用過的號碼範圍。</p>
+          <p>另一邊，熱門活動讓同一台機器在一毫秒內收到第 4,097 筆請求。這些不是演算法課本裡的邊角案例，而是上線後必須先決定「等待、拒絕還是分流」的營運規則。</p>
+        </div>
+      </div>
+
       <div class="failure-table-wrap">
         <table>
           <thead>
@@ -1255,6 +1325,14 @@
       <p class="scene-label">Scene 06 · 把技術放回產品決策</p>
       <h2>四種真實情境，你會選哪一種 ID？</h2>
       <p class="lead">先看系統需要什麼，再選最簡單的方案。Snowflake 是一種答案，不是每一題的答案。</p>
+
+      <div class="scene-context">
+        <p class="context-label">此刻發生什麼</p>
+        <div class="context-story">
+          <p>一週後，同一家公司同時規劃內部後台、離線筆記 App、大量事件平台與公開訂單網址。它們都需要 ID，限制卻完全不同：有的只有一台資料庫，有的斷網也要建立，有的不能洩漏時間。</p>
+          <p>所以選型不是問「哪種 ID 最先進」，而是問「這個產品現在最不能接受哪種代價」。</p>
+        </div>
+      </div>
 
       <div class="choice-stack">
         <article class="choice-question">
