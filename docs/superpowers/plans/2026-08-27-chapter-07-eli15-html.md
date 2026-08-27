@@ -17,7 +17,7 @@
 - Reference: `chapter-07-unique-id-generator-quick-guide.html` - series color tokens, responsive shell, focus treatment, and progressive navigation pattern.
 - Preserve: `chapter-07-design-a-unique-id-generator.md` - existing 30-minute source.
 - Preserve: `chapter-07-unique-id-generator-quick-guide.html` - existing 10-minute guide.
-- Preserve: `notion-pages.json` - current Notion mapping, including its pre-existing uncommitted Chapter 07 entry.
+- Preserve: `notion-pages.json` - committed mapping inside the feature worktree. The main worktree's pre-existing uncommitted Chapter 07 entry remains isolated and must still be present after integration.
 
 ## Baseline Protection
 
@@ -26,7 +26,7 @@ The implementation must preserve these current SHA-1 values:
 ```text
 93e8eb365b574f9a4ce8e43685da376fb0322cd8  chapter-07-design-a-unique-id-generator.md
 8b829ec85cc64497d00a3d23e0bc4b3beaaa6842  chapter-07-unique-id-generator-quick-guide.html
-2754f7b3dd7df78f19c23e7aaa0879da12124b7e  notion-pages.json
+e59a566eeca1dd9f8802bbf9d831497255c5c3f8  notion-pages.json
 ```
 
 ### Task 1: Establish the standalone document and story
@@ -35,7 +35,7 @@ The implementation must preserve these current SHA-1 values:
 - Create: `chapter-07-unique-id-generator-eli15.html`
 - Reference: `docs/superpowers/specs/2026-08-26-chapter-07-eli15-html-design.md`
 
-- [ ] **Step 1: Run the acceptance checks before the file exists**
+- [x] **Step 1: Run the acceptance checks before the file exists**
 
 Run:
 
@@ -47,7 +47,7 @@ rg -q 'id="choose"' chapter-07-unique-id-generator-eli15.html
 
 Expected: FAIL because the new HTML does not exist yet.
 
-- [ ] **Step 2: Reconfirm protected-file hashes**
+- [x] **Step 2: Reconfirm protected-file hashes**
 
 Run:
 
@@ -57,7 +57,7 @@ shasum chapter-07-design-a-unique-id-generator.md chapter-07-unique-id-generator
 
 Expected: output exactly matches the three hashes in **Baseline Protection**.
 
-- [ ] **Step 3: Create the semantic document shell**
+- [x] **Step 3: Create the semantic document shell**
 
 Create one `<!doctype html>` document with:
 
@@ -93,7 +93,7 @@ Create one `<!doctype html>` document with:
 
 Each section starts with a `SCENE NN` eyebrow and one literal question as its `h2`. Do not add a marketing hero or feature-description copy.
 
-- [ ] **Step 4: Write Scene 1 and Scene 2 as one continuous order flow**
+- [x] **Step 4: Write Scene 1 and Scene 2 as one continuous order flow**
 
 Scene 1 must show:
 
@@ -120,7 +120,7 @@ Scene 2 must show a CSS/HTML system diagram:
 
 Use a native `details` prompt asking what happens if A, B, and C each issue `101`. The revealed answer must name real consequences: duplicate primary key errors, a payment attached to the wrong order, or a support lookup returning the wrong record.
 
-- [ ] **Step 5: Write Scene 3 as four attempts, each tied to the same order**
+- [x] **Step 5: Write Scene 3 as four attempts, each tied to the same order**
 
 Use four unframed full-width attempt rows:
 
@@ -137,7 +137,7 @@ End with this missing combination:
 local generation + compact integer + rough time order + no per-order central round trip
 ```
 
-- [ ] **Step 6: Run the story acceptance checks**
+- [x] **Step 6: Run the story acceptance checks**
 
 Run:
 
@@ -157,7 +157,7 @@ Expected: all commands exit 0.
 **Files:**
 - Modify: `chapter-07-unique-id-generator-eli15.html`
 
-- [ ] **Step 1: Write Scene 4 from meaning to bits**
+- [x] **Step 1: Write Scene 4 from meaning to bits**
 
 Introduce Snowflake as a parcel label:
 
@@ -176,7 +176,7 @@ Only after those meanings are clear, show a stable-width bit band:
 
 Explain that `datacenter + machine` together are one node identity. Explain that Snowflake reduces coordination from every order to node assignment at deployment time; it does not eliminate coordination entirely.
 
-- [ ] **Step 2: Add the progressive Snowflake field explorer**
+- [x] **Step 2: Add the progressive Snowflake field explorer**
 
 Add three buttons:
 
@@ -213,7 +213,7 @@ var partCopy = {
 
 Clicking a button must update `aria-pressed`, the bit-band selected style, and the fixed-size explanation region without changing its height.
 
-- [ ] **Step 3: Write Scene 5 as three concrete failure stories**
+- [x] **Step 3: Write Scene 5 as three concrete failure stories**
 
 Use a problem/consequence/response table or three full-width rows:
 
@@ -241,7 +241,7 @@ API: { "id": "1541815603606036480" }
 Keep it as a string. JavaScript Number is only safe through 2^53 - 1.
 ```
 
-- [ ] **Step 4: Verify numerical and semantic claims**
+- [x] **Step 4: Verify numerical and semantic claims**
 
 Run:
 
@@ -260,7 +260,7 @@ Expected: all commands exit 0.
 **Files:**
 - Modify: `chapter-07-unique-id-generator-eli15.html`
 
-- [ ] **Step 1: Write the four Scene 6 choices**
+- [x] **Step 1: Write the four Scene 6 choices**
 
 Use four `.choice-question` groups. Each group provides 2-3 buttons with `data-feedback`; one recommended answer must explain both fit and tradeoff:
 
@@ -273,7 +273,7 @@ Use four `.choice-question` groups. Each group provides 2-3 buttons with `data-f
 
 Each group also contains a `details.choice-fallback` with the complete recommendation for no-JavaScript readers.
 
-- [ ] **Step 2: Implement choice feedback**
+- [x] **Step 2: Implement choice feedback**
 
 Use delegated click handling:
 
@@ -293,7 +293,7 @@ document.querySelectorAll('.choice-question').forEach(function (question) {
 
 Only hide `.choice-fallback` after the script adds `.js` to the root element.
 
-- [ ] **Step 3: Add the story-scroll design system**
+- [x] **Step 3: Add the story-scroll design system**
 
 Define the existing series tokens exactly:
 
@@ -351,7 +351,7 @@ Also implement:
 - no gradients, external media, decorative blobs, or nested cards.
 - `prefers-reduced-motion` gating for small reveal transitions.
 
-- [ ] **Step 4: Add progressive active navigation**
+- [x] **Step 4: Add progressive active navigation**
 
 ```javascript
 var navLinks = Array.prototype.slice.call(document.querySelectorAll('.journey-nav a'));
@@ -373,7 +373,7 @@ if ('IntersectionObserver' in window) {
 }
 ```
 
-- [ ] **Step 5: Run static structure and script checks**
+- [x] **Step 5: Run static structure and script checks**
 
 Run:
 
@@ -404,7 +404,7 @@ Expected: all commands exit 0 and Node reports no syntax error.
 - Preserve: `chapter-07-unique-id-generator-quick-guide.html`
 - Preserve: `notion-pages.json`
 
-- [ ] **Step 1: Start an isolated local preview**
+- [x] **Step 1: Start an isolated local preview**
 
 Inspect port ownership, then serve the repository:
 
@@ -415,7 +415,7 @@ python3 -m http.server 8283 --bind 127.0.0.1
 
 Expected: use port 8283 only if the ownership check shows it is free; otherwise choose another free port and record it.
 
-- [ ] **Step 2: Run desktop Playwright verification**
+- [x] **Step 2: Run desktop Playwright verification**
 
 Open:
 
@@ -433,7 +433,7 @@ At 1440x900:
 - assert no console errors;
 - save screenshot to `/tmp/ch7-eli15-desktop.png`.
 
-- [ ] **Step 3: Run mobile Playwright verification**
+- [x] **Step 3: Run mobile Playwright verification**
 
 At 390x844:
 
@@ -444,7 +444,7 @@ At 390x844:
 - assert no page-level horizontal overflow;
 - save screenshot to `/tmp/ch7-eli15-mobile.png`.
 
-- [ ] **Step 4: Inspect screenshots and canvas/page pixels**
+- [x] **Step 4: Inspect screenshots and canvas/page pixels**
 
 Open both screenshots and confirm:
 
@@ -456,7 +456,7 @@ both: diagrams and bit band are nonblank, selected states are distinguishable wi
 
 If browser checks reveal a defect, correct the smallest relevant HTML/CSS/JavaScript region and rerun both viewport checks.
 
-- [ ] **Step 5: Run final protected-scope verification**
+- [x] **Step 5: Run final protected-scope verification**
 
 Run:
 
@@ -472,12 +472,12 @@ Expected hashes:
 ```text
 93e8eb365b574f9a4ce8e43685da376fb0322cd8  chapter-07-design-a-unique-id-generator.md
 8b829ec85cc64497d00a3d23e0bc4b3beaaa6842  chapter-07-unique-id-generator-quick-guide.html
-2754f7b3dd7df78f19c23e7aaa0879da12124b7e  notion-pages.json
+e59a566eeca1dd9f8802bbf9d831497255c5c3f8  notion-pages.json
 ```
 
-Expected Git state: the new plan and HTML may be uncommitted; `notion-pages.json` retains exactly its pre-existing Chapter 07 mapping diff; no original Chapter 07 content file differs.
+Expected feature-worktree state: only the corrected plan and new HTML differ; `notion-pages.json` and both original Chapter 07 content files are clean. After integrating the feature branch, separately verify that the main worktree still has its pre-existing Chapter 07 mapping diff and SHA-1 `2754f7b3dd7df78f19c23e7aaa0879da12124b7e`.
 
-- [ ] **Step 6: Review the final content against the three learning outcomes**
+- [x] **Step 6: Review the final content against the three learning outcomes**
 
 Read the guide from top to bottom and verify it explicitly answers:
 

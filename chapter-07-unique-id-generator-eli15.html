@@ -1,0 +1,1411 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>唯一 ID 到底用在哪裡？｜Chapter 07 ELI15</title>
+<style>
+  :root {
+    --paper: #f7f8f5;
+    --surface: #ffffff;
+    --ink: #17201b;
+    --muted: #5e6a63;
+    --line: #d8ddd9;
+    --problem: #b4473a;
+    --problem-soft: #f8ebe8;
+    --solution: #16745b;
+    --solution-soft: #e8f3ef;
+    --system: #245f9e;
+    --system-soft: #eaf1f8;
+    --warning: #9a6a12;
+    --warning-soft: #f7f0df;
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    --space-3xl: 4.5rem;
+  }
+
+  * {
+    box-sizing: border-box;
+    letter-spacing: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background: var(--paper);
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC",
+      "Noto Sans TC", sans-serif;
+    font-size: 1rem;
+    line-height: 1.75;
+    font-kerning: normal;
+  }
+
+  button,
+  summary,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button {
+    font: inherit;
+  }
+
+  .skip-link {
+    position: fixed;
+    top: var(--space-md);
+    left: var(--space-md);
+    z-index: 30;
+    transform: translateY(-180%);
+    background: var(--ink);
+    color: var(--surface);
+    padding: 0.65rem 0.9rem;
+    border-radius: 0.25rem;
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
+  }
+
+  .shell {
+    min-width: 0;
+    padding: 0 var(--space-md) var(--space-3xl);
+  }
+
+  .journey-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    gap: var(--space-xs);
+    margin: 0 calc(var(--space-md) * -1) var(--space-xl);
+    padding: 0.65rem var(--space-md);
+    overflow-x: auto;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+    scrollbar-width: thin;
+  }
+
+  .journey-nav a {
+    flex: 0 0 auto;
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.86rem;
+    font-weight: 650;
+    padding: 0.4rem 0.65rem;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+  }
+
+  .journey-nav a::before {
+    content: "";
+    width: 0.45rem;
+    height: 0.45rem;
+    margin-right: 0.45rem;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    background: var(--paper);
+  }
+
+  .journey-nav a[aria-current="location"] {
+    color: var(--system);
+    border-color: #b9cce0;
+    background: var(--system-soft);
+  }
+
+  .journey-nav a[aria-current="location"]::before {
+    background: var(--system);
+  }
+
+  main {
+    width: min(100%, 48rem);
+    min-width: 0;
+    margin: 0 auto;
+  }
+
+  .story-section {
+    position: relative;
+    padding: var(--space-xl) 0 var(--space-3xl);
+    border-bottom: 1px solid var(--line);
+    scroll-margin-top: 5rem;
+  }
+
+  .story-section:last-child {
+    border-bottom: 0;
+  }
+
+  .scene-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin: 0 0 var(--space-sm);
+    color: var(--problem);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .scene-label::after {
+    content: "";
+    width: 3rem;
+    height: 1px;
+    background: var(--problem);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: "Iowan Old Style", "Palatino Linotype", "Noto Serif TC",
+      "Songti TC", serif;
+    font-weight: 700;
+  }
+
+  h1 {
+    max-width: 13ch;
+    margin: 0 0 var(--space-md);
+    font-size: clamp(2.25rem, 8vw, 4rem);
+    line-height: 1.08;
+  }
+
+  h2 {
+    max-width: 23ch;
+    margin: 0 0 var(--space-lg);
+    font-size: clamp(1.7rem, 5vw, 2.45rem);
+    line-height: 1.2;
+  }
+
+  h3 {
+    margin: 0 0 var(--space-sm);
+    font-size: 1.18rem;
+    line-height: 1.35;
+  }
+
+  p {
+    margin: 0 0 var(--space-md);
+  }
+
+  .lead {
+    max-width: 41rem;
+    color: #33413a;
+    font-size: clamp(1.06rem, 2vw, 1.22rem);
+    line-height: 1.8;
+  }
+
+  .meta-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm) var(--space-lg);
+    margin: var(--space-lg) 0 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+  }
+
+  .meta-line span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .meta-line span::before {
+    content: "";
+    width: 0.35rem;
+    height: 0.35rem;
+    background: var(--solution);
+    border-radius: 50%;
+  }
+
+  code {
+    background: #e9ece8;
+    padding: 0.08rem 0.28rem;
+    border-radius: 0.2rem;
+    color: #23352c;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 0.9em;
+    font-variant-ligatures: none;
+  }
+
+  .order-receipt {
+    position: relative;
+    margin: var(--space-xl) 0 var(--space-2xl);
+    padding: var(--space-lg);
+    border: 1px solid #bfc8c2;
+    border-radius: 0.25rem;
+    background: var(--surface);
+    box-shadow: 0 0.35rem 0 #dfe4e0;
+  }
+
+  .order-receipt::after {
+    content: "";
+    position: absolute;
+    right: var(--space-lg);
+    top: var(--space-lg);
+    width: 3.2rem;
+    height: 3.2rem;
+    border: 2px solid var(--problem);
+    border-radius: 50%;
+    opacity: 0.72;
+  }
+
+  .receipt-top {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding-right: 4.5rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  .receipt-product {
+    margin: var(--space-lg) 0;
+    padding: var(--space-md) 0;
+    border-top: 1px dashed #aab5ad;
+    border-bottom: 1px dashed #aab5ad;
+    font-family: "Iowan Old Style", "Palatino Linotype", serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+
+  .receipt-id {
+    display: grid;
+    gap: var(--space-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .receipt-id strong {
+    color: var(--problem);
+    font-size: 1.05rem;
+  }
+
+  .flow-line {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-sm);
+    margin: var(--space-xl) 0;
+    overflow-x: auto;
+    padding: var(--space-xs) 0 var(--space-sm);
+    scrollbar-width: thin;
+  }
+
+  .flow-step {
+    flex: 1 0 8.2rem;
+    min-height: 5.75rem;
+    display: grid;
+    align-content: center;
+    gap: var(--space-xs);
+    padding: var(--space-md);
+    border: 1px solid var(--line);
+    border-radius: 0.35rem;
+    background: var(--surface);
+  }
+
+  .flow-step strong {
+    font-size: 0.9rem;
+  }
+
+  .flow-step span {
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  .flow-arrow {
+    flex: 0 0 auto;
+    align-self: center;
+    color: var(--system);
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+
+  .definition-pair {
+    display: grid;
+    gap: var(--space-lg);
+    margin: var(--space-xl) 0;
+  }
+
+  .definition-pair article {
+    padding-top: var(--space-md);
+    border-top: 2px solid var(--line);
+  }
+
+  .definition-pair article:first-child {
+    border-top-color: var(--warning);
+  }
+
+  .definition-pair article:last-child {
+    border-top-color: var(--solution);
+  }
+
+  .definition-pair p {
+    color: var(--muted);
+  }
+
+  .system-route {
+    margin: var(--space-xl) 0;
+    padding: var(--space-lg) 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .buyer-cloud {
+    display: flex;
+    justify-content: center;
+    gap: 0.28rem;
+    margin-bottom: var(--space-md);
+    color: var(--muted);
+    font-size: 0.72rem;
+  }
+
+  .buyer-cloud span {
+    width: 1.6rem;
+    height: 1.6rem;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--surface);
+  }
+
+  .route-node {
+    width: min(100%, 24rem);
+    margin: 0 auto;
+    padding: 0.65rem var(--space-md);
+    text-align: center;
+    border: 1px solid var(--system);
+    border-radius: 0.25rem;
+    background: var(--system-soft);
+    color: #173f68;
+    font-weight: 750;
+  }
+
+  .route-stem {
+    width: 1px;
+    height: var(--space-lg);
+    margin: 0 auto;
+    background: var(--system);
+  }
+
+  .server-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-sm);
+  }
+
+  .server {
+    min-height: 5rem;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 0.55rem;
+    border: 1px solid var(--problem);
+    border-radius: 0.25rem;
+    background: var(--problem-soft);
+    color: #743027;
+    font-size: 0.83rem;
+    font-weight: 750;
+  }
+
+  .collision-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-sm);
+    margin: var(--space-md) 0;
+    color: var(--problem);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .collision-strip span {
+    padding: var(--space-sm);
+    text-align: center;
+    border: 1px dashed var(--problem);
+    background: var(--surface);
+    font-weight: 800;
+  }
+
+  details {
+    margin: var(--space-xl) 0;
+    border: 1px solid #c2cbc5;
+    border-radius: 0.35rem;
+    background: var(--surface);
+  }
+
+  summary {
+    min-height: 3.25rem;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 0.72rem var(--space-md);
+    cursor: pointer;
+    color: #71372e;
+    font-weight: 750;
+  }
+
+  summary::marker {
+    color: var(--problem);
+  }
+
+  .detail-body {
+    padding: var(--space-md);
+    border-top: 1px solid var(--line);
+    color: #33413a;
+  }
+
+  .detail-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  .impact-list {
+    display: grid;
+    gap: var(--space-sm);
+    margin: var(--space-md) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .impact-list li {
+    padding-left: 1.3rem;
+    position: relative;
+  }
+
+  .impact-list li::before {
+    content: "×";
+    position: absolute;
+    left: 0;
+    color: var(--problem);
+    font-weight: 900;
+  }
+
+  .attempts {
+    margin: var(--space-xl) 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .attempt-row {
+    display: grid;
+    gap: var(--space-md);
+    padding: var(--space-lg) 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .attempt-number {
+    width: 2.15rem;
+    height: 2.15rem;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--ink);
+    border-radius: 50%;
+    font-family: "Iowan Old Style", "Palatino Linotype", serif;
+    font-weight: 800;
+  }
+
+  .attempt-copy p {
+    margin-bottom: var(--space-sm);
+  }
+
+  .attempt-copy p:last-child {
+    margin-bottom: 0;
+    color: var(--problem);
+  }
+
+  .attempt-fit {
+    align-self: start;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.25rem;
+    background: var(--solution-soft);
+    color: #10543f;
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  .missing-piece {
+    margin: var(--space-xl) 0 0;
+    padding: var(--space-lg);
+    border: 1px solid #9db8d3;
+    background: var(--system-soft);
+  }
+
+  .missing-piece p:last-child {
+    margin-bottom: 0;
+    color: #173f68;
+    font-weight: 750;
+  }
+
+  .parcel-label {
+    margin: var(--space-xl) 0;
+    display: grid;
+    border: 1px solid #afbab3;
+    border-radius: 0.25rem;
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .parcel-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: 0.7rem var(--space-md);
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .parcel-grid {
+    display: grid;
+  }
+
+  .parcel-grid div {
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .parcel-grid div:last-child {
+    border-bottom: 0;
+  }
+
+  .parcel-grid span {
+    display: block;
+    color: var(--muted);
+    font-size: 0.76rem;
+  }
+
+  .parcel-grid strong {
+    display: block;
+    margin-top: var(--space-xs);
+    font-size: 1.02rem;
+  }
+
+  .part-controls {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-sm);
+    margin: var(--space-xl) 0 var(--space-md);
+  }
+
+  .part-controls button,
+  .choice-options button {
+    min-height: 3rem;
+    border: 1px solid #aab5ad;
+    border-radius: 0.3rem;
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 750;
+    padding: 0.62rem 0.72rem;
+    transition: transform 140ms ease-out, background 140ms ease-out,
+      border-color 140ms ease-out;
+  }
+
+  .part-controls button[aria-pressed="true"] {
+    border-color: var(--system);
+    background: var(--system-soft);
+    color: #173f68;
+  }
+
+  .bit-band-wrap {
+    overflow-x: auto;
+    padding-bottom: var(--space-sm);
+  }
+
+  .bit-band {
+    min-width: 42rem;
+    display: grid;
+    grid-template-columns: 3rem 2.9fr 1fr 1fr 1.45fr;
+    border: 1px solid #8fa198;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bit-field {
+    min-height: 5.6rem;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: var(--space-xs);
+    padding: 0.65rem;
+    text-align: center;
+    border-right: 1px solid #8fa198;
+    background: var(--surface);
+    font-size: 0.78rem;
+  }
+
+  .bit-field:last-child {
+    border-right: 0;
+  }
+
+  .bit-field span {
+    color: var(--muted);
+    font-size: 0.7rem;
+  }
+
+  .bit-field.is-selected {
+    background: var(--system-soft);
+    color: #173f68;
+    box-shadow: inset 0 -4px 0 var(--system);
+  }
+
+  .part-explanation {
+    min-height: 10.75rem;
+    display: grid;
+    align-content: center;
+    margin-top: var(--space-md);
+    padding: var(--space-lg);
+    border: 1px solid #b9cce0;
+    background: var(--system-soft);
+  }
+
+  .part-explanation strong {
+    display: block;
+    margin-bottom: var(--space-sm);
+    color: #173f68;
+    font-family: "Iowan Old Style", "Palatino Linotype", serif;
+    font-size: 1.15rem;
+  }
+
+  .part-explanation p {
+    margin: 0 0 var(--space-sm);
+  }
+
+  .part-example {
+    color: var(--system);
+    font-weight: 750;
+  }
+
+  .coordination-note {
+    margin: var(--space-xl) 0;
+    padding: var(--space-md) 0;
+    border-top: 2px solid var(--solution);
+    border-bottom: 2px solid var(--solution);
+    color: #10543f;
+    font-weight: 680;
+  }
+
+  .failure-table-wrap {
+    overflow-x: auto;
+    margin: var(--space-xl) 0;
+  }
+
+  table {
+    width: 100%;
+    min-width: 38rem;
+    border-collapse: collapse;
+    background: var(--surface);
+    font-size: 0.9rem;
+  }
+
+  th,
+  td {
+    padding: 0.8rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--line);
+  }
+
+  th {
+    color: var(--muted);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+  }
+
+  td:first-child {
+    color: var(--problem);
+    font-weight: 750;
+  }
+
+  .api-warning {
+    margin: var(--space-xl) 0;
+    display: grid;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    border: 1px solid #d3bd88;
+    background: var(--warning-soft);
+  }
+
+  .api-warning pre {
+    margin: 0;
+    overflow-x: auto;
+    color: #5f430d;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.82rem;
+  }
+
+  .choice-stack {
+    display: grid;
+    gap: var(--space-2xl);
+    margin-top: var(--space-xl);
+  }
+
+  .choice-question {
+    padding-top: var(--space-lg);
+    border-top: 2px solid var(--line);
+  }
+
+  .choice-number {
+    margin: 0 0 var(--space-xs);
+    color: var(--system);
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+
+  .choice-question h3 {
+    max-width: 36rem;
+  }
+
+  .choice-options {
+    display: none;
+    gap: var(--space-sm);
+    margin: var(--space-md) 0;
+  }
+
+  .choice-options button {
+    text-align: left;
+  }
+
+  .choice-options button[aria-pressed="true"] {
+    border-color: var(--solution);
+    background: var(--solution-soft);
+    color: #10543f;
+  }
+
+  .choice-feedback {
+    min-height: 8.5rem;
+    display: none;
+    align-content: center;
+    padding: var(--space-md);
+    border: 1px solid #b8cbc2;
+    background: var(--solution-soft);
+    color: #174b3b;
+  }
+
+  .choice-feedback:empty {
+    border-style: dashed;
+    background: var(--surface);
+  }
+
+  .choice-feedback:empty::before {
+    content: "選一個方案後，這裡會出現適用原因與代價。";
+    color: var(--muted);
+  }
+
+  .js .choice-fallback {
+    display: none;
+  }
+
+  .js .choice-options,
+  .js .choice-feedback {
+    display: grid;
+  }
+
+  .final-rule {
+    margin-top: var(--space-3xl);
+    padding: var(--space-xl) 0;
+    border-top: 4px double var(--ink);
+    border-bottom: 4px double var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", "Noto Serif TC", serif;
+    font-size: clamp(1.25rem, 4vw, 1.75rem);
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--system);
+    outline-offset: 3px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .journey-nav a:hover {
+      color: var(--system);
+      background: var(--system-soft);
+    }
+
+    .part-controls button:hover,
+    .choice-options button:hover {
+      transform: translateY(-1px);
+      border-color: var(--system);
+    }
+  }
+
+  @media (pointer: coarse) {
+    .part-controls button,
+    .choice-options button,
+    .journey-nav a {
+      min-height: 3rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .js .story-section {
+      animation: scene-reveal 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes scene-reveal {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  }
+
+  @media (min-width: 42rem) {
+    .definition-pair {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .attempt-row {
+      grid-template-columns: 2.3rem minmax(0, 1fr) 11.5rem;
+      align-items: start;
+    }
+
+    .parcel-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .parcel-grid div {
+      border-right: 1px solid var(--line);
+      border-bottom: 0;
+    }
+
+    .parcel-grid div:last-child {
+      border-right: 0;
+    }
+
+    .choice-options {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .api-warning {
+      grid-template-columns: minmax(0, 1fr) minmax(15rem, 0.75fr);
+      align-items: center;
+    }
+  }
+
+  @media (min-width: 781px) {
+    .shell {
+      display: grid;
+      grid-template-columns: 13rem minmax(0, 48rem);
+      gap: clamp(2rem, 5vw, 3.5rem);
+      width: min(100% - 3rem, 69rem);
+      margin: 0 auto;
+      padding: var(--space-2xl) 0 6rem;
+    }
+
+    .journey-nav {
+      position: sticky;
+      top: var(--space-xl);
+      z-index: 5;
+      align-self: start;
+      flex-direction: column;
+      gap: 0.15rem;
+      margin: 0;
+      padding: var(--space-sm) 0 var(--space-sm) var(--space-md);
+      overflow: visible;
+      border-left: 1px solid var(--line);
+      border-bottom: 0;
+      background: transparent;
+    }
+
+    .journey-nav::before {
+      content: "ORDER TRACE / 101";
+      margin: 0 0 var(--space-md) 0.65rem;
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 800;
+    }
+
+    .journey-nav a {
+      width: 100%;
+    }
+
+    main {
+      margin: 0;
+    }
+
+    .story-section {
+      padding: var(--space-2xl) 0 var(--space-3xl);
+      scroll-margin-top: var(--space-xl);
+    }
+  }
+
+  @media (max-width: 27rem) {
+    .part-controls {
+      grid-template-columns: 1fr;
+    }
+
+    .server {
+      font-size: 0.75rem;
+    }
+
+    .collision-strip {
+      font-size: 0.82rem;
+    }
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到主要內容</a>
+<div class="shell">
+  <nav class="journey-nav" aria-label="訂單 ID 的旅程">
+    <a href="#order-start">按下購買</a>
+    <a href="#collision">三台撞號</a>
+    <a href="#attempts">四次嘗試</a>
+    <a href="#snowflake">拆開 Snowflake</a>
+    <a href="#failures">現實故障</a>
+    <a href="#choose">情境選型</a>
+  </nav>
+
+  <main id="main-content">
+    <section id="order-start" class="story-section">
+      <p class="scene-label">Scene 01 · 晚上 8:00 限量開賣</p>
+      <h1>小明按下購買，誰替這筆訂單取名字？</h1>
+      <p class="lead">這個「名字」會一路跟著付款、出貨、退款與客服。它不能只在畫面上看起來不重複，而是幾年後還要準確指向同一筆資料。</p>
+
+      <div class="order-receipt" aria-label="球鞋訂單追蹤單">
+        <div class="receipt-top">
+          <span>ONE PAIR STORE</span>
+          <span>20:00:00</span>
+        </div>
+        <div class="receipt-product">LIMITED RUNNER / SIZE 27</div>
+        <div class="receipt-id">
+          <span>畫面上的暫時編號</span>
+          <strong>temp_order_8f3</strong>
+          <span>等待伺服器回傳永久 ID</span>
+        </div>
+      </div>
+
+      <div class="flow-line" aria-label="訂單從前端到後端的流程">
+        <div class="flow-step">
+          <strong>按下購買</strong>
+          <span>前端先插入一列</span>
+        </div>
+        <span class="flow-arrow" aria-hidden="true">→</span>
+        <div class="flow-step">
+          <strong>temp_order_8f3</strong>
+          <span>畫面先有穩定識別</span>
+        </div>
+        <span class="flow-arrow" aria-hidden="true">→</span>
+        <div class="flow-step">
+          <strong>POST /orders</strong>
+          <span>交給後端建立資料</span>
+        </div>
+        <span class="flow-arrow" aria-hidden="true">→</span>
+        <div class="flow-step">
+          <strong>永久 ID</strong>
+          <span>替換 temporary ID</span>
+        </div>
+      </div>
+
+      <div class="definition-pair">
+        <article>
+          <h3>Temporary ID：先把畫面顧好</h3>
+          <p>它只要在這次操作裡不撞名，讓 optimistic UI、cache key 與錯誤重試知道「是哪一列」即可。</p>
+        </article>
+        <article>
+          <h3>Permanent ID：把所有資料接起來</h3>
+          <p>訂單、付款、物流、發票、客服單與稽核紀錄，都靠它確認自己談的是同一筆交易。</p>
+        </article>
+      </div>
+
+      <details>
+        <summary>先猜猜看：直接用現在的訂單總數加 1，可以嗎？</summary>
+        <div class="detail-body">
+          <p>只有一台資料庫時通常可以，而且是很好的選擇。真正的麻煩要等到很多台伺服器同時接單才出現。</p>
+        </div>
+      </details>
+
+      <p class="meta-line">
+        <span>約 15 分鐘</span>
+        <span>不需要分散式系統背景</span>
+        <span>先看用途，再學名詞</span>
+      </p>
+    </section>
+
+    <section id="collision" class="story-section">
+      <p class="scene-label">Scene 02 · 十秒湧入一萬筆訂單</p>
+      <h2>為什麼多幾台伺服器，流水號反而變難？</h2>
+      <p class="lead">限量商品開賣時，一台伺服器吃不下所有請求。Load Balancer 會把買家分給 A、B、C 三台 Order Server。</p>
+
+      <div class="system-route" aria-label="一萬名買家經負載平衡器分流到三台訂單伺服器">
+        <div class="buyer-cloud" aria-hidden="true">
+          <span>1</span><span>2</span><span>3</span><span>…</span><span>10k</span>
+        </div>
+        <div class="route-node">Load Balancer</div>
+        <div class="route-stem"></div>
+        <div class="server-row">
+          <div class="server">Order Server A</div>
+          <div class="server">Order Server B</div>
+          <div class="server">Order Server C</div>
+        </div>
+        <div class="collision-strip" aria-label="三台伺服器都產生訂單 101">
+          <span>order 101</span>
+          <span>order 101</span>
+          <span>order 101</span>
+        </div>
+      </div>
+
+      <p>如果每台伺服器都只看自己的記憶體，三台都可能以為「下一號是 101」。唯一 ID 的第一個難題不是數字怎麼加，而是<strong>分散的機器怎麼避免使用同一個號碼空間</strong>。</p>
+
+      <details>
+        <summary>先猜猜看：撞號最壞只是資料庫報錯嗎？</summary>
+        <div class="detail-body">
+          <p>報錯反而是比較安全的結果。若資料模型或整合流程沒有及時擋住，可能發生：</p>
+          <ul class="impact-list">
+            <li>付款紀錄連到另一位買家的訂單。</li>
+            <li>客服查 101，拿到錯誤的收件地址。</li>
+            <li>物流事件覆蓋別人的出貨狀態。</li>
+          </ul>
+        </div>
+      </details>
+
+      <p>所以永久 ID 至少要做到：不同機器不重複、產生速度夠快，而且加伺服器時不用每筆請求都先開會。</p>
+    </section>
+
+    <section id="attempts" class="story-section">
+      <p class="scene-label">Scene 03 · 我們試了四種發號方式</p>
+      <h2>每個方法都解一題，為什麼還不夠？</h2>
+      <p class="lead">沒有一種 ID 永遠最好。下面每次嘗試都值得用，只是它們適合的系統大小與限制不同。</p>
+
+      <div class="attempts">
+        <article class="attempt-row">
+          <div class="attempt-number">1</div>
+          <div class="attempt-copy">
+            <h3>Database auto increment</h3>
+            <p>所有訂單交給同一台資料庫加一：101、102、103。它簡單、短、好查。</p>
+            <p>但所有寫入都依賴同一個發號點；跨資料庫或跨區後，它會變成瓶頸與單點。</p>
+          </div>
+          <div class="attempt-fit"><strong>仍然適合：</strong><br>單一資料庫的小型後台。</div>
+        </article>
+
+        <article class="attempt-row">
+          <div class="attempt-number">2</div>
+          <div class="attempt-copy">
+            <h3>多主奇偶號</h3>
+            <p>DB A 發奇數，DB B 發偶數，兩邊可以同時工作，也不會重複。</p>
+            <p>加第三台時要重排規則；而且號碼大小不再可靠代表全域建立順序。</p>
+          </div>
+          <div class="attempt-fit"><strong>解到：</strong><br>兩個固定發號點分流。</div>
+        </article>
+
+        <article class="attempt-row">
+          <div class="attempt-number">3</div>
+          <div class="attempt-copy">
+            <h3>UUIDv4</h3>
+            <p>每台伺服器都能自己產生一長串隨機 ID，不必詢問中央服務。</p>
+            <p>它是 128-bit、主要為隨機資料；不符合這次「精簡 64-bit、能大致按時間排」的需求。</p>
+          </div>
+          <div class="attempt-fit"><strong>仍然適合：</strong><br>重視本地產生與不透明 ID。</div>
+        </article>
+
+        <article class="attempt-row">
+          <div class="attempt-number">4</div>
+          <div class="attempt-copy">
+            <h3>Ticket Server</h3>
+            <p>架一個專門發號的中央服務，所有 Order Server 都向它領取短而有序的號碼。</p>
+            <p>訂單又要排隊等同一個服務；做成多台高可用後，發號機彼此還是要協調範圍。</p>
+          </div>
+          <div class="attempt-fit"><strong>解到：</strong><br>統一發出短、有序的 ID。</div>
+        </article>
+      </div>
+
+      <div class="missing-piece">
+        <h3>我們真正缺的組合</h3>
+        <p>像 UUID 一樣能在本機產生，像資料庫 ID 一樣精簡，又能讓新資料大致排在舊資料後面，而且不必每筆訂單都去中央服務領號。</p>
+      </div>
+
+      <details>
+        <summary>先猜猜看：能不能把「時間」直接放進 ID？</summary>
+        <div class="detail-body">
+          <p>可以，但只放時間還不夠。同一毫秒可能有多台機器、每台又收到多筆訂單，因此還需要「機器身分」與「同毫秒序號」。</p>
+        </div>
+      </details>
+    </section>
+
+    <section id="snowflake" class="story-section">
+      <p class="scene-label">Scene 04 · 把答案寫進 ID 本身</p>
+      <h2>Snowflake 怎麼讓三台機器各自發號？</h2>
+      <p class="lead">把它想成包裹標籤：不是只寫流水號，而是同時記下「何時處理、哪條產線處理、這一瞬間的第幾件」。</p>
+
+      <div class="parcel-label" aria-label="Snowflake 像包裹標籤的三段資訊">
+        <div class="parcel-head">
+          <span>ORDER ID LABEL</span>
+          <span>64-BIT / INTERNAL</span>
+        </div>
+        <div class="parcel-grid">
+          <div>
+            <span>WHEN</span>
+            <strong>20:00:00.120</strong>
+          </div>
+          <div>
+            <span>WHERE</span>
+            <strong>台北 / Server 7</strong>
+          </div>
+          <div>
+            <span>WHICH ONE</span>
+            <strong>同毫秒第 2 筆</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-controls" role="group" aria-label="Snowflake 欄位">
+        <button type="button" data-part="timestamp" aria-pressed="true">時間</button>
+        <button type="button" data-part="node" aria-pressed="false">機器身分</button>
+        <button type="button" data-part="sequence" aria-pressed="false">同毫秒序號</button>
+      </div>
+
+      <div class="bit-band-wrap" aria-label="Snowflake 64-bit 配置">
+        <div class="bit-band">
+          <div class="bit-field">
+            <strong>0</strong>
+            <span>1 bit</span>
+          </div>
+          <div class="bit-field is-selected" data-bit-part="timestamp">
+            <strong>timestamp</strong>
+            <span>41 bits</span>
+          </div>
+          <div class="bit-field" data-bit-part="node">
+            <strong>datacenter</strong>
+            <span>5 bits</span>
+          </div>
+          <div class="bit-field" data-bit-part="node">
+            <strong>machine</strong>
+            <span>5 bits</span>
+          </div>
+          <div class="bit-field" data-bit-part="sequence">
+            <strong>sequence</strong>
+            <span>12 bits</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="part-explanation" class="part-explanation" aria-live="polite">
+        <strong>時間：讓新資料大致排在後面</strong>
+        <p>同一台機器進入新的毫秒時，sequence 會重新從 0 開始。</p>
+        <span class="part-example">例：20:00:00.120</span>
+      </div>
+
+      <p><strong>1 + 41 + 5 + 5 + 12 = 64 bits</strong>。其中 datacenter 與 machine 合起來就是 node identity：32 個機房 × 每個機房 32 台機器，共 1,024 個生成節點。12-bit sequence 則提供同一節點、同一毫秒內 0 到 4,095，也就是 4,096 個位置。</p>
+
+      <p class="coordination-note">這不是完全不協調。部署時仍要替每台生成器分配不重複的 node identity；只是協調從「每一筆訂單」降成「機器加入或離開時」。</p>
+
+      <details>
+        <summary>先猜猜看：兩台機器同一毫秒都用 sequence 0，會撞號嗎？</summary>
+        <div class="detail-body">
+          <p>不會，只要它們的 datacenter / machine 組合不同。完整 ID 比的是所有欄位，不是只看 sequence。</p>
+        </div>
+      </details>
+    </section>
+
+    <section id="failures" class="story-section">
+      <p class="scene-label">Scene 05 · 現實世界不會永遠照劇本走</p>
+      <h2>時鐘倒退或一毫秒太忙，會發生什麼？</h2>
+      <p class="lead">Snowflake 把中央服務的壓力拆給每個節點，也把責任一起拆過去：每台機器必須管好自己的時間、身分與序號。</p>
+
+      <div class="failure-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>現實狀況</th>
+              <th>可能後果</th>
+              <th>安全處理</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Clock rollback</td>
+              <td><code>20:00:00.500</code> 校時後變成 <code>20:00:00.480</code>，可能回到用過的 timestamp / sequence 範圍。</td>
+              <td>倒退很小可等待；倒退較大就拒絕發號、告警並把流量導到健康節點。</td>
+            </tr>
+            <tr>
+              <td>Sequence exhaustion</td>
+              <td>同一節點、同一毫秒來到第 4,097 筆。若直接從 0 重來，就會重複先前組合。</td>
+              <td>等下一毫秒或回傳過載，讓上游分流；不能安靜繞回 0。</td>
+            </tr>
+            <tr>
+              <td>Duplicate node identity</td>
+              <td>Server A、B 都拿到 <code>datacenter=3, machine=7</code>，兩台進入相同 ID 空間。</td>
+              <td>用租約或配置中心分配身分，啟動時發現衝突就拒絕上線。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="api-warning">
+        <div>
+          <h3>前端最容易踩到的坑</h3>
+          <p>Snowflake 可能大於 JavaScript <code>Number</code> 的安全上限 <code>2^53 - 1</code>。API 應以字串傳輸，前端也保持字串；不要為了排序或顯示先轉成 Number。</p>
+        </div>
+        <pre aria-label="API 以字串回傳 Snowflake ID">{
+  "id": "1541815603606036480"
+}</pre>
+      </div>
+
+      <p>另外，Snowflake 會透露大致建立時間，也有規律可循。知道 ID 不代表有權讀取資料；授權必須另外檢查，公開網址也可以使用另一個不透明 ID。</p>
+    </section>
+
+    <section id="choose" class="story-section">
+      <p class="scene-label">Scene 06 · 把技術放回產品決策</p>
+      <h2>四種真實情境，你會選哪一種 ID？</h2>
+      <p class="lead">先看系統需要什麼，再選最簡單的方案。Snowflake 是一種答案，不是每一題的答案。</p>
+
+      <div class="choice-stack">
+        <article class="choice-question">
+          <p class="choice-number">QUESTION 01</p>
+          <h3>公司內部後台，只有一台主要資料庫，每天建立幾百筆資料。</h3>
+          <div class="choice-options">
+            <button type="button" aria-pressed="false" data-feedback="建議選資料庫 auto increment。它最簡單、容易除錯，也不需要維運時鐘與 node identity。代價是未來若拆成多個寫入資料庫，需要重新評估 ID 策略。">資料庫 auto increment</button>
+            <button type="button" aria-pressed="false" data-feedback="Snowflake 能做，但這裡是在用分散式複雜度解不存在的問題。只有一台資料庫時，簡單通常比理論吞吐更重要。">Snowflake</button>
+          </div>
+          <div class="choice-feedback" aria-live="polite"></div>
+          <details class="choice-fallback">
+            <summary>查看建議</summary>
+            <div class="detail-body"><p>選資料庫 auto increment。單一資料庫、小流量時它簡單可靠，不需要額外管理時鐘與節點身分。</p></div>
+          </details>
+        </article>
+
+        <article class="choice-question">
+          <p class="choice-number">QUESTION 02</p>
+          <h3>離線筆記 App 沒網路時也要建立資料，幾天後才同步。</h3>
+          <div class="choice-options">
+            <button type="button" aria-pressed="false" data-feedback="建議評估 UUIDv7 或 ULID。裝置可以本地產生，不必先取得 machine ID；時間排序也比 UUIDv4 友善。代價是 128-bit，而且同步時的內容衝突仍要另外解決。">UUIDv7 / ULID</button>
+            <button type="button" aria-pressed="false" data-feedback="Server-assigned Snowflake 不適合離線建立，因為裝置無法即時找伺服器發號，也不該隨意自封 node identity。">Server-assigned Snowflake</button>
+          </div>
+          <div class="choice-feedback" aria-live="polite"></div>
+          <details class="choice-fallback">
+            <summary>查看建議</summary>
+            <div class="detail-body"><p>選 UUIDv7 或 ULID，讓裝置離線時自行產生。不過 ID 不撞號，不代表兩台裝置同時改同一篇筆記就能自動合併。</p></div>
+          </details>
+        </article>
+
+        <article class="choice-question">
+          <p class="choice-number">QUESTION 03</p>
+          <h3>大量訂單與事件分散寫入，需要精簡 64-bit ID，也想大致按時間排。</h3>
+          <div class="choice-options">
+            <button type="button" aria-pressed="false" data-feedback="這是 Snowflake 的強項：每台節點本地高速產生 64-bit ID，並用 timestamp 帶出時間趨勢。代價是要可靠管理時鐘、sequence 與 node identity。">Snowflake</button>
+            <button type="button" aria-pressed="false" data-feedback="UUIDv4 能分散產生，但它是 128-bit 且主要為隨機資料，不符合這題的精簡格式與時間趨勢要求。">UUIDv4</button>
+          </div>
+          <div class="choice-feedback" aria-live="polite"></div>
+          <details class="choice-fallback">
+            <summary>查看建議</summary>
+            <div class="detail-body"><p>選 Snowflake，因為題目明確要求 64-bit、高吞吐與時間趨勢；同時接受管理時鐘與節點身分的維運成本。</p></div>
+          </details>
+        </article>
+
+        <article class="choice-question">
+          <p class="choice-number">QUESTION 04</p>
+          <h3>公開訂單網址不能讓別人猜到建立時間或交易量。</h3>
+          <div class="choice-options">
+            <button type="button" aria-pressed="false" data-feedback="建議內外分開：資料庫內部仍可用 Snowflake，公開網址另用隨機 opaque public ID。代價是多一欄與唯一索引，但不會把內部主鍵責任硬塞給公開介面。">另外建立 opaque public ID</button>
+            <button type="button" aria-pressed="false" data-feedback="直接公開 Snowflake 會透露大致時間且較容易枚舉。即使改成 opaque ID，API 仍必須做授權檢查。">直接公開 Snowflake</button>
+          </div>
+          <div class="choice-feedback" aria-live="polite"></div>
+          <details class="choice-fallback">
+            <summary>查看建議</summary>
+            <div class="detail-body"><p>保留 Snowflake 作內部主鍵，另外產生不可推測的 public ID。無論 ID 長什麼樣，API 都還是要檢查使用者有沒有權限。</p></div>
+          </details>
+        </article>
+      </div>
+
+      <p class="final-rule">先問「誰要產生、能不能連網、格式多大、要不要排序、能不能透露時間」，再選最簡單的 ID。不要先選 Snowflake，再替它找理由。</p>
+    </section>
+  </main>
+</div>
+
+<script>
+  document.documentElement.classList.add('js');
+
+  var partCopy = {
+    timestamp: {
+      title: '時間：讓新資料大致排在後面',
+      body: '同一台機器進入新的毫秒時，sequence 會重新從 0 開始。',
+      example: '20:00:00.120'
+    },
+    node: {
+      title: '機器身分：讓不同伺服器使用不同號碼空間',
+      body: 'datacenter 與 machine 的組合不能同時分配給兩台生成器。',
+      example: '台北機房 / 第 7 台'
+    },
+    sequence: {
+      title: '序號：分開同一台機器、同一毫秒的多筆訂單',
+      body: '12 bits 提供 0 到 4095；用完就等下一毫秒或分流。',
+      example: '第 0、1、2 筆'
+    }
+  };
+
+  var partButtons = Array.prototype.slice.call(
+    document.querySelectorAll('button[data-part]')
+  );
+  var partExplanation = document.getElementById('part-explanation');
+  var bitFields = Array.prototype.slice.call(
+    document.querySelectorAll('[data-bit-part]')
+  );
+
+  function selectPart(part) {
+    var copy = partCopy[part];
+    if (!copy) return;
+
+    partButtons.forEach(function (button) {
+      button.setAttribute('aria-pressed', String(button.dataset.part === part));
+    });
+    bitFields.forEach(function (field) {
+      field.classList.toggle('is-selected', field.dataset.bitPart === part);
+    });
+    partExplanation.innerHTML =
+      '<strong>' + copy.title + '</strong>' +
+      '<p>' + copy.body + '</p>' +
+      '<span class="part-example">例：' + copy.example + '</span>';
+  }
+
+  partButtons.forEach(function (button) {
+    button.addEventListener('click', function () {
+      selectPart(button.dataset.part);
+    });
+  });
+
+  document.querySelectorAll('.choice-question').forEach(function (question) {
+    var output = question.querySelector('.choice-feedback');
+    question.querySelectorAll('button[data-feedback]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        question.querySelectorAll('button[data-feedback]').forEach(function (candidate) {
+          candidate.setAttribute('aria-pressed', String(candidate === button));
+        });
+        output.textContent = button.getAttribute('data-feedback');
+      });
+    });
+  });
+
+  var navLinks = Array.prototype.slice.call(
+    document.querySelectorAll('.journey-nav a')
+  );
+
+  if (typeof IntersectionObserver === 'function') {
+    var observer = new IntersectionObserver(function (entries) {
+      var visible = entries
+        .filter(function (entry) { return entry.isIntersecting; })
+        .sort(function (a, b) { return b.intersectionRatio - a.intersectionRatio; })[0];
+      if (!visible) return;
+
+      navLinks.forEach(function (link) {
+        link.removeAttribute('aria-current');
+      });
+      var active = navLinks.find(function (link) {
+        return link.hash === '#' + visible.target.id;
+      });
+      if (active) active.setAttribute('aria-current', 'location');
+    }, { rootMargin: '-20% 0px -65%', threshold: [0, 0.2, 0.6] });
+
+    document.querySelectorAll('main > section[id]').forEach(function (section) {
+      observer.observe(section);
+    });
+  }
+</script>
+</body>
+</html>
