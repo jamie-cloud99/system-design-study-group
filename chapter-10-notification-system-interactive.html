@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>通知系統互動講義｜第十章</title>
+<style>
+  :root {
+    --paper: #f7f8f5;
+    --surface: #ffffff;
+    --ink: #17201b;
+    --muted: #5e6a63;
+    --line: #d8ddd9;
+    --problem: #b4473a;
+    --solution: #16745b;
+    --system: #245f9e;
+    --warning: #9a6a12;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", sans-serif;
+    line-height: 1.7;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 13rem minmax(0, 48rem);
+    gap: 3rem;
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 6rem;
+  }
+
+  nav.progress-nav {
+    position: sticky;
+    top: 2rem;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    border-left: 2px solid var(--line);
+    padding-left: 0.9rem;
+    height: max-content;
+  }
+
+  nav.progress-nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  nav.progress-nav a[aria-current="location"] {
+    color: var(--system);
+    background: rgba(36, 95, 158, 0.08);
+    font-weight: 600;
+  }
+
+  main { min-width: 0; }
+
+  .concept-section {
+    padding: 2.25rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .concept-section:last-of-type { border-bottom: none; }
+
+  h1 { font-size: 1.9rem; margin: 0 0 0.5rem; }
+  h2 { font-size: 1.5rem; margin: 0 0 1rem; }
+  h3 { font-size: 1.05rem; margin: 0 0 0.5rem; }
+
+  .eyebrow {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: var(--problem);
+    font-weight: 700;
+    margin: 0 0 0.4rem;
+  }
+
+  .meta { color: var(--muted); font-size: 0.9rem; }
+
+  .analogy {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--warning);
+    border-radius: 0.4rem;
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+  }
+
+  .concept-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin: 1.25rem 0;
+  }
+
+  .concept-grid section {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 1.1rem 1.2rem;
+    min-width: 0;
+  }
+
+  .concept-grid section[aria-label="怎麼做"] { border-top: 3px solid var(--solution); }
+  .concept-grid section[aria-label="代價"] { border-top: 3px solid var(--warning); }
+  .concept-grid p:first-child { margin-top: 0; }
+  .concept-grid p:last-child { margin-bottom: 0; }
+
+  .takeaway {
+    background: rgba(22, 116, 91, 0.08);
+    border-radius: 0.4rem;
+    padding: 0.85rem 1.1rem;
+    margin: 0;
+  }
+
+  ol.plain-steps { margin: 0; padding-left: 1.2rem; }
+  ol.plain-steps li { margin-bottom: 0.4rem; }
+  ol.plain-steps li:last-child { margin-bottom: 0; }
+
+  pre.diagram {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.92rem;
+  }
+
+  th, td { text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; }
+
+  code {
+    background: rgba(23, 32, 27, 0.06);
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.25rem;
+    font-size: 0.9em;
+  }
+
+  details {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.8rem;
+  }
+
+  summary { cursor: pointer; font-weight: 600; }
+  details p { margin: 0.7rem 0 0; color: var(--muted); }
+
+  :focus-visible { outline: 3px solid var(--system); outline-offset: 3px; }
+
+  details.more { margin: 1rem 0; }
+  details.more summary { font-size: 0.95rem; }
+  details.more > :first-child + * { margin-top: 0.7rem; }
+  .waffle-row { display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap; margin: 1rem 0; }
+  .waffle-row svg { width: 9rem; height: auto; flex: none; }
+  .waffle-row p { margin: 0; flex: 1 1 14rem; }
+  .cell rect { fill: var(--surface); stroke: var(--line); }
+  .cell.dup rect { fill: rgba(180, 71, 58, 0.3); stroke: var(--problem); }
+
+  /* interactive demos */
+  .demo { margin: 1.25rem 0; }
+
+  .svg-wrap {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .svg-wrap svg { display: block; width: 100%; height: auto; min-width: 560px; }
+  .svg-wrap svg.narrow { min-width: 0; max-width: 30rem; margin: 0 auto; }
+  svg text { fill: var(--ink); font-size: 14px; font-family: inherit; }
+  svg text.dim { fill: var(--muted); font-size: 12px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; align-items: center; }
+
+  button, input[type="text"] {
+    font: inherit;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: 0.4rem;
+  }
+
+  button { cursor: pointer; }
+  button[aria-pressed="true"] {
+    border-color: var(--system);
+    color: var(--system);
+    font-weight: 600;
+    background: rgba(36, 95, 158, 0.08);
+  }
+  button:disabled { opacity: 0.45; cursor: default; }
+  input[type="text"] { flex: 1 1 14rem; min-width: 0; }
+  input[type="range"] { flex: 1 1 12rem; }
+
+  .caption {
+    min-height: 3.4em;
+    margin: 0.5rem 0 0;
+    padding: 0.7rem 1rem;
+    border-left: 3px solid var(--system);
+    background: rgba(36, 95, 158, 0.06);
+    border-radius: 0.3rem;
+  }
+
+  .caption.bad { border-left-color: var(--problem); background: rgba(180, 71, 58, 0.07); }
+  .caption.ok { border-left-color: var(--solution); background: rgba(22, 116, 91, 0.08); }
+
+  pre.log {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.7rem 1rem;
+    font-size: 0.82rem;
+    min-height: 3.2em;
+    margin: 0.5rem 0 0;
+    overflow-x: auto;
+  }
+
+  /* trace diagram */
+  .node rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .node.done rect { stroke: var(--solution); }
+  .node.on rect { fill: rgba(36, 95, 158, 0.12); stroke: var(--system); stroke-width: 3; }
+  .node.drop rect { fill: rgba(180, 71, 58, 0.12); stroke: var(--problem); stroke-width: 3; }
+  .edge { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+  #dot { fill: var(--system); fill-opacity: 0.85; stroke: var(--surface); stroke-width: 2; }
+  #dot-g { transition: transform 450ms ease; }
+
+  /* frontier + bloom */
+  .item rect { stroke-width: 1.5; }
+  .s-A rect { fill: rgba(36, 95, 158, 0.15); stroke: var(--system); }
+  .s-B rect { fill: rgba(22, 116, 91, 0.15); stroke: var(--solution); }
+  .s-C rect { fill: rgba(154, 106, 18, 0.15); stroke: var(--warning); }
+  .box rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .box.hot rect { fill: rgba(180, 71, 58, 0.12); stroke: var(--problem); }
+  .bit rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .bit.set rect { fill: rgba(22, 116, 91, 0.25); stroke: var(--solution); }
+  .bit.probe rect { stroke: var(--system); stroke-width: 3.5; }
+
+  .chain-box rect { stroke-width: 1.5; }
+  .chain-box.p rect { fill: rgba(180, 71, 58, 0.08); stroke: var(--problem); }
+  .chain-box.s rect { fill: rgba(22, 116, 91, 0.08); stroke: var(--solution); }
+  .chain-box.b rect { fill: rgba(36, 95, 158, 0.08); stroke: var(--system); }
+  .chain-arrow { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .js .concept-section { animation: reveal 320ms ease-out both; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #dot-g { transition: none; }
+  }
+
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 780px) {
+    .shell { display: block; padding: 1.5rem 1rem 4rem; }
+    nav.progress-nav {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      flex-direction: row;
+      overflow-x: auto;
+      border-left: none;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+      padding: 0.6rem 0.2rem;
+      margin-bottom: 1.5rem;
+      white-space: nowrap;
+    }
+    .concept-grid { grid-template-columns: 1fr; }
+    table { display: block; overflow-x: auto; }
+    .concept-section { scroll-margin-top: 4.5rem; }
+  }
+</style>
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="progress-nav" aria-label="章節導覽">
+    <a href="#recap">需求與規模</a>
+    <a href="#trace">追蹤一則通知</a>
+    <a href="#queues">佇列隔離</a>
+    <a href="#reliable">不漏、不重複</a>
+    <a href="#control">設定與限流</a>
+    <a href="#real">真實系統</a>
+    <a href="#chain">因果鏈</a>
+    <a href="#check">面試模擬</a>
+  </nav>
+
+  <main>
+    <section id="recap" class="concept-section">
+      <p class="eyebrow">先看規模</p>
+      <h1>通知系統・互動講義</h1>
+      <p class="meta">第十章・給前端工程師的系統設計讀書會・可在現場一邊討論一邊操作</p>
+      <p>通知系統是一條管線：事件發生，查出要通知誰、怎麼通知，再交給第三方送出。送一則很簡單，難的是可靠：第三方會失敗、會變慢，使用者不想被重複打擾，而且一個渠道出事不能拖垮其他渠道。</p>
+      <table>
+        <thead><tr><th>渠道</th><th>靠什麼送</th><th>要存的聯絡資訊</th></tr></thead>
+        <tbody>
+          <tr><td>iOS 推播</td><td>Apple APNs</td><td>裝置 token</td></tr>
+          <tr><td>Android 推播</td><td>Google FCM</td><td>裝置 token</td></tr>
+          <tr><td>簡訊</td><td>簡訊服務商</td><td>手機號碼</td></tr>
+          <tr><td>Email</td><td>Email 服務商</td><td>Email 位址</td></tr>
+        </tbody>
+      </table>
+      <details class="more">
+        <summary>細節：聯絡資訊怎麼來、規模多大？</summary>
+        <p>使用者安裝 App 或註冊時，後端取得並存下 token、電話與 Email。一個使用者可以有多台裝置，所以「使用者」與「裝置」要分開存。書中的目標是軟即時（越快越好，忙時允許稍慢），規模為每天數百萬則。</p>
+      </details>
+      <div class="analogy">🏗️ 你在 App 按下「允許通知」，其實是在登記「這台裝置可以被叫醒」的憑證。後端存的就是這些憑證。</div>
+    </section>
+
+    <section id="trace" class="concept-section">
+      <p class="eyebrow">先看全貌</p>
+      <h2>一則通知會經過哪些元件？</h2>
+      <p>選一種情境，用「下一步」讓小圓點帶你走完。四種結局：成功送達、使用者關閉通知而被丟棄、第三方失敗後重試成功、重複訊息被去重丟棄。</p>
+      <div class="demo" id="trace-demo">
+        <div class="controls" role="group" aria-label="情境">
+          <button type="button" data-sc="ok" aria-pressed="true">成功送達</button>
+          <button type="button" data-sc="optout" aria-pressed="false">使用者已關閉</button>
+          <button type="button" data-sc="retry" aria-pressed="false">第三方失敗</button>
+          <button type="button" data-sc="dup" aria-pressed="false">重複訊息</button>
+        </div>
+        <div class="svg-wrap">
+          <svg viewBox="0 0 750 270" role="img" aria-label="通知處理流程的元件">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="#5e6a63"/>
+              </marker>
+            </defs>
+            <path class="edge" d="M160 102 H208" marker-end="url(#arrow)"/>
+            <path class="edge" d="M350 102 H398" marker-end="url(#arrow)"/>
+            <path class="edge" d="M540 102 H588" marker-end="url(#arrow)"/>
+            <path class="edge" d="M660 124 V208" marker-end="url(#arrow)"/>
+            <path class="edge" d="M590 232 H542" marker-end="url(#arrow)"/>
+            <path class="edge" d="M400 232 H352" marker-end="url(#arrow)"/>
+            <path class="edge" d="M210 232 H162" marker-end="url(#arrow)"/>
+            <g class="node" data-node="upstream"><rect x="20" y="80" width="140" height="44" rx="6"/><text x="90" y="107" text-anchor="middle">上游服務</text></g>
+            <g class="node" data-node="server"><rect x="210" y="80" width="140" height="44" rx="6"/><text x="280" y="107" text-anchor="middle">通知伺服器</text></g>
+            <g class="node" data-node="settings"><rect x="400" y="80" width="140" height="44" rx="6"/><text x="470" y="107" text-anchor="middle">設定／聯絡資訊</text></g>
+            <g class="node" data-node="log"><rect x="590" y="80" width="140" height="44" rx="6"/><text x="660" y="107" text-anchor="middle">通知紀錄</text></g>
+            <g class="node" data-node="queue"><rect x="590" y="210" width="140" height="44" rx="6"/><text x="660" y="237" text-anchor="middle">渠道佇列</text></g>
+            <g class="node" data-node="worker"><rect x="400" y="210" width="140" height="44" rx="6"/><text x="470" y="237" text-anchor="middle">Worker</text></g>
+            <g class="node" data-node="provider"><rect x="210" y="210" width="140" height="44" rx="6"/><text x="280" y="237" text-anchor="middle">第三方服務</text></g>
+            <g class="node" data-node="device"><rect x="20" y="210" width="140" height="44" rx="6"/><text x="90" y="237" text-anchor="middle">使用者裝置</text></g>
+            <g id="dot-g"><circle id="dot" r="7" cx="0" cy="0"/></g>
+          </svg>
+        </div>
+        <p class="caption" id="trace-caption" aria-live="polite"></p>
+        <div class="controls">
+          <button type="button" id="trace-prev">上一步</button>
+          <button type="button" id="trace-next">下一步</button>
+          <button type="button" id="trace-reset">重來</button>
+        </div>
+      </div>
+      <p class="takeaway"><strong>一句話：</strong>通知系統的每個元件都在回答：該不該送、送去哪、送失敗怎麼辦。後面幾節逐一拆開。</p>
+    </section>
+
+    <section id="queues" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>一個渠道出事，會不會拖垮全部？</h2>
+      <p>假設簡訊服務商掛了。比較「所有通知共用一條佇列」和「每個渠道一條佇列」，按「下一輪」觀察。每輪每個 Worker 取一則；簡訊永遠送不出去。</p>
+      <div class="demo" id="queue-demo">
+        <div class="controls" role="group" aria-label="佇列模式">
+          <button type="button" data-mode="shared" aria-pressed="true">共用一條佇列</button>
+          <button type="button" data-mode="split" aria-pressed="false">每個渠道一條</button>
+        </div>
+        <div class="svg-wrap"><svg id="queue-svg" viewBox="0 0 570 190" role="img" aria-label="佇列與送達狀態"></svg></div>
+        <div class="controls">
+          <button type="button" id="queue-next">下一輪</button>
+          <button type="button" id="queue-reset">重來</button>
+        </div>
+        <p class="caption" id="queue-caption" aria-live="polite"></p>
+      </div>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>拆出狀態，再用佇列隔離</h3>
+          <p>把資料庫與快取從通知伺服器拆出，伺服器變成可水平擴展的無狀態服務。再用訊息佇列切開「收到請求」與「真的送出」，每個渠道一條佇列、各自的 Worker，也能各自擴充。</p>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>多了佇列要維運，通知也不再同步送出：呼叫端拿到的是「已收件」，不是「已送達」。</p>
+        </section>
+      </div>
+      <p class="takeaway"><strong>一句話：</strong>佇列不只用來緩衝，也用來把故障關在自己的渠道裡。</p>
+    </section>
+
+    <section id="reliable" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>送失敗要重送，重送又會重複</h2>
+      <p>書中的立場：無法保證恰好一次。網路出問題時，訊息可能被重新投遞，所以做法是「至少一次」加上去重：每則通知帶事件 ID，Worker 送出前先檢查是否處理過。拖動滑桿決定同一則訊息被投遞幾次，再切換去重。</p>
+      <div class="demo" id="dedupe-demo">
+        <div class="controls">
+          <label for="dd-range">同一則訊息被投遞次數</label>
+          <input type="range" id="dd-range" min="1" max="5" value="3">
+          <span id="dd-n">3</span>
+        </div>
+        <div class="controls" role="group" aria-label="去重模式">
+          <button type="button" data-dd="off" aria-pressed="true">不去重</button>
+          <button type="button" data-dd="on" aria-pressed="false">用事件 ID 去重</button>
+        </div>
+        <div class="svg-wrap"><svg id="dd-svg" viewBox="0 0 580 90" role="img" aria-label="使用者收到的通知次數"></svg></div>
+        <p class="caption" id="dd-caption" aria-live="polite"></p>
+      </div>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>三道保險</h3>
+          <ol class="plain-steps">
+            <li><strong>通知紀錄</strong>：先寫紀錄再入佇列，失敗時可以還原，不靜默遺失。</li>
+            <li><strong>重試</strong>：送失敗放回佇列再試，超過上限就告警。</li>
+            <li><strong>去重</strong>：以事件 ID 檢查是否處理過。</li>
+          </ol>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>去重要多查一次儲存，紀錄與去重表會一直成長，需要設保存期限。極端時間差下仍可能有少數重複，所以通知內容最好本身就能容忍重複。</p>
+        </section>
+      </div>
+      <details class="more">
+        <summary>細節：重試的等待時間為什麼越拉越長？</summary>
+        <p>第三方剛恢復時，如果所有失敗的訊息同時重試，又會把它壓垮。實務上間隔逐步加長（指數退避）。下圖的秒數是示範用設定，不是書中數字；無效 token 之類的錯誤重試也沒用，應直接標記。</p>
+        <div class="svg-wrap">
+          <svg class="narrow" viewBox="0 0 520 170" role="img" aria-label="重試等待時間示意">
+            <text x="10" y="24">第 1 次重試</text><rect x="110" y="10" width="20" height="18" rx="4" fill="#245f9e" opacity="0.7"/><text class="dim" x="140" y="24">1 秒</text>
+            <text x="10" y="64">第 2 次重試</text><rect x="110" y="50" width="40" height="18" rx="4" fill="#245f9e" opacity="0.7"/><text class="dim" x="160" y="64">2 秒</text>
+            <text x="10" y="104">第 3 次重試</text><rect x="110" y="90" width="80" height="18" rx="4" fill="#245f9e" opacity="0.7"/><text class="dim" x="200" y="104">4 秒</text>
+            <text x="10" y="144">超過上限</text><rect x="110" y="130" width="160" height="18" rx="4" fill="#b4473a" opacity="0.7"/><text class="dim" x="280" y="144">告警／人工處理</text>
+          </svg>
+        </div>
+      </details>
+      <p class="takeaway"><strong>一句話：</strong>接受「至少一次」，再用事件 ID 把重複擋在送出之前。</p>
+    </section>
+
+    <section id="control" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>送得可靠了，但使用者被轟炸、不想收的也收到</h2>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>尊重使用者</h3>
+          <ol class="plain-steps">
+            <li><strong>使用者設定</strong>：送出前先查設定，關掉的類型直接丟棄。</li>
+            <li><strong>限流</strong>：限制單一使用者每天收到的數量（呼應第四章）。</li>
+            <li><strong>範本</strong>：格式相近的通知做成範本再填參數，保持一致。</li>
+          </ol>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>每則通知多一次設定查詢，設定放快取就要面對過期：使用者剛關掉卻還收到。限流太緊也可能擋掉重要通知，所以驗證碼這類要有獨立的優先級。</p>
+        </section>
+      </div>
+      <details class="more">
+        <summary>細節：監控與事件追蹤</summary>
+        <p><strong>監控佇列長度</strong>：佇列越堆越多，代表 Worker 不夠或下游出問題，需要加 Worker 或告警。<strong>事件追蹤</strong>：記錄送出、送達、點開等狀態，供分析與調整策略。</p>
+      </details>
+      <p class="takeaway"><strong>一句話：</strong>能送出不代表該送出；信任一旦被打擾消耗掉，就很難換回來。</p>
+    </section>
+
+    <section id="real" class="concept-section">
+      <p class="eyebrow">接上現實</p>
+      <h2>真實系統怎麼取捨？</h2>
+      <p>APNs 與 FCM 是書中點名的推播入口。各家服務商的限制與重試規則不同，實作前請以官方文件為準；本頁的重試次數與秒數都是示範用設定。</p>
+      <p class="takeaway"><strong>一句話：</strong>自己的系統負責「送給誰、送幾次、失敗怎麼辦」，最後一哩路交給第三方。</p>
+    </section>
+
+    <section id="chain" class="concept-section">
+      <p class="eyebrow">回頭整理</p>
+      <h2>因果鏈：為什麼是這個順序？</h2>
+      <p>現在你認識每個元件了，回頭看每一步是被什麼問題逼出來的。</p>
+      <div class="svg-wrap"><svg id="chain-svg" class="narrow" viewBox="0 0 480 700" role="img" aria-label="通知系統設計的因果鏈"></svg></div>
+      <table>
+        <thead><tr><th>問題</th><th>解法</th><th>代價</th></tr></thead>
+        <tbody>
+          <tr><td>單點故障、渠道互相拖慢</td><td>拆出狀態、每渠道一條佇列</td><td>多了佇列；只能回「已收件」</td></tr>
+          <tr><td>失敗遺失、重送重複</td><td>通知紀錄、重試、事件 ID 去重</td><td>多一次查詢；紀錄會成長</td></tr>
+          <tr><td>使用者被轟炸</td><td>使用者設定、限流、範本</td><td>設定快取過期；限流可能擋重要通知</td></tr>
+          <tr><td>看不見系統狀況</td><td>佇列監控、事件追蹤</td><td>多一套指標要維護</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="check" class="concept-section">
+      <p class="eyebrow">自我檢查</p>
+      <h2>面試模擬</h2>
+      <details>
+        <summary>為什麼每個渠道要用獨立的佇列？</summary>
+        <p>隔離故障。某個第三方變慢或失敗，只會堆積自己的佇列，其他渠道照常運作；各渠道也可以獨立擴充 Worker 數量。</p>
+      </details>
+      <details>
+        <summary>怎麼避免使用者收到重複通知？</summary>
+        <p>不追求恰好一次，而是至少一次加去重：每則通知帶事件 ID，Worker 送出前查是否處理過。</p>
+      </details>
+      <details>
+        <summary>第三方服務掛了，通知會不會遺失？</summary>
+        <p>先寫通知紀錄再入佇列，失敗時重試，超過上限進入告警或人工處理。重點是不靜默丟失。</p>
+      </details>
+      <details>
+        <summary>行銷通知和驗證碼要不要共用佇列？</summary>
+        <p>不要。大量行銷通知會把驗證碼擋在後面。依優先級分開佇列與 Worker。</p>
+      </details>
+    </section>
+  </main>
+</div>
+
+<script>
+  document.documentElement.classList.add('js');
+
+  // ---- nav active state ----
+  const links = [...document.querySelectorAll('.progress-nav a')];
+  const byId = new Map(links.map(link => [link.hash.slice(1), link]));
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries.filter(entry => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      links.forEach(link => link.removeAttribute('aria-current'));
+      byId.get(visible.target.id)?.setAttribute('aria-current', 'location');
+    }, { rootMargin: '-20% 0px -65%', threshold: [0, 0.2, 0.6] });
+
+    document.querySelectorAll('main > section[id]').forEach(section => observer.observe(section));
+  }
+
+  const $ = id => document.getElementById(id);
+  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  // ---- 1. trace one notification ----
+  const SCENARIOS = {
+    ok: [
+      ['upstream', '訂單服務發出事件：「訂單 #1001 已出貨」，呼叫通知 API。'],
+      ['server', '通知伺服器驗證請求，並替這則通知產生事件 ID。'],
+      ['settings', '查使用者設定與聯絡資訊：有開啟出貨通知，有一個 iOS 裝置 token。'],
+      ['log', '先寫進通知紀錄，之後失敗才能還原。'],
+      ['queue', '放進 iOS 推播佇列，呼叫端此時就拿到「已收件」。'],
+      ['worker', 'Worker 取出訊息，檢查事件 ID 沒處理過，套用範本後呼叫第三方。'],
+      ['provider', 'APNs 收下並轉送。'],
+      ['device', '使用者裝置跳出通知。', 'ok']
+    ],
+    optout: [
+      ['upstream', '行銷系統發出促銷事件。'],
+      ['server', '通知伺服器驗證通過。'],
+      ['settings', '查到使用者已關閉行銷通知。', 'drop', '丟棄：不寫紀錄、不入佇列。']
+    ],
+    retry: [
+      ['queue', '（接續入佇列之後）iOS 推播佇列有一則待送訊息。'],
+      ['worker', 'Worker 呼叫第三方，對方暫時失敗（逾時）。', 'drop', '這一次沒成功，訊息放回佇列。'],
+      ['queue', '訊息放回佇列，等待一段時間後再試（間隔逐步拉長）。'],
+      ['worker', 'Worker 再次取出並呼叫第三方。'],
+      ['provider', '這次第三方收下了。'],
+      ['device', '使用者裝置跳出通知。', 'ok']
+    ],
+    dup: [
+      ['queue', '佇列因為上一次沒收到確認，再次投遞同一則訊息。'],
+      ['worker', 'Worker 檢查事件 ID：已處理過。', 'drop', '丟棄：不再呼叫第三方，使用者不會收到第二次。']
+    ]
+  };
+
+  (function () {
+    const root = $('trace-demo');
+    const nodes = Object.fromEntries([...root.querySelectorAll('.node')].map(g => [g.dataset.node, g]));
+    const center = {};
+    for (const [id, g] of Object.entries(nodes)) {
+      const r = g.querySelector('rect');
+      center[id] = [+r.getAttribute('x') + 12, +r.getAttribute('y')]; // 停在節點左上角的邊框上，不蓋住文字
+    }
+    const dot = $('dot-g');
+    const caption = $('trace-caption');
+    let sc = 'ok', i = 0;
+
+    function render() {
+      const steps = SCENARIOS[sc];
+      Object.values(nodes).forEach(g => g.setAttribute('class', 'node'));
+      steps.slice(0, i).forEach(s => nodes[s[0]].classList.add('done'));
+      const [id, text, flag, extra] = steps[i];
+      nodes[id].classList.remove('done');
+      nodes[id].classList.add(flag === 'drop' ? 'drop' : 'on');
+      dot.style.transform = `translate(${center[id][0]}px, ${center[id][1]}px)`;
+      caption.className = 'caption' + (flag === 'drop' ? ' bad' : flag === 'ok' ? ' ok' : '');
+      caption.textContent = `第 ${i + 1} / ${steps.length} 步：${text}${extra ? ' ' + extra : ''}`;
+      $('trace-prev').disabled = i === 0;
+      $('trace-next').disabled = i === steps.length - 1;
+    }
+
+    root.querySelectorAll('[data-sc]').forEach(btn => btn.addEventListener('click', () => {
+      sc = btn.dataset.sc; i = 0;
+      root.querySelectorAll('[data-sc]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+      render();
+    }));
+    $('trace-next').addEventListener('click', () => { i++; render(); });
+    $('trace-prev').addEventListener('click', () => { i--; render(); });
+    $('trace-reset').addEventListener('click', () => { i = 0; render(); });
+    render();
+  })();
+
+  // ---- 2. queue isolation ----
+  (function () {
+    const svg = $('queue-svg'), cap = $('queue-caption'), next = $('queue-next');
+    const LABEL = { P: '推', E: '信', S: '簡' }, CLS = { P: 'A', E: 'B', S: 'C' };
+    let mode = 'shared', q, done, tick;
+
+    function reset() {
+      const seq = ['P', 'S', 'E', 'P', 'S', 'E', 'P', 'E'];
+      q = { all: seq.slice(), P: seq.filter(t => t === 'P'), E: seq.filter(t => t === 'E'), S: seq.filter(t => t === 'S') };
+      done = { P: 0, E: 0, S: 0 }; tick = 0;
+      cap.className = 'caption';
+      cap.textContent = '簡訊服務商已掛掉。按「下一輪」，每輪每個 Worker 取一則。';
+      render();
+    }
+
+    function step() {
+      tick++;
+      if (mode === 'shared') {
+        // 單一 Worker 只能看佇列最前面那則；簡訊失敗就卡住
+        const head = q.all[0];
+        if (head === 'S') { cap.className = 'caption bad'; cap.textContent = `第 ${tick} 輪：最前面是簡訊，送不出去，後面的推播與 Email 全部被擋住。`; }
+        else { q.all.shift(); done[head]++; cap.className = 'caption'; cap.textContent = `第 ${tick} 輪：送出一則${LABEL[head]}。`; }
+      } else {
+        const sent = [];
+        for (const t of ['P', 'E']) if (q[t].length) { q[t].shift(); done[t]++; sent.push(LABEL[t]); }
+        cap.className = 'caption ' + (sent.length ? 'ok' : 'bad');
+        cap.textContent = `第 ${tick} 輪：` + (sent.length ? `送出 ${sent.join('、')}；簡訊佇列自己卡著，不影響其他。` : '推播與 Email 都送完了，只剩簡訊在等服務商恢復。');
+      }
+      render();
+    }
+
+    const chip = (t, x, y) => `<g class="item s-${CLS[t]}"><rect x="${x}" y="${y}" width="34" height="28" rx="4"/><text x="${x + 17}" y="${y + 19}" text-anchor="middle">${LABEL[t]}</text></g>`;
+    const stat = () => `推播 ${done.P}、Email ${done.E}、簡訊 ${done.S}`;
+
+    function render() {
+      let h = '';
+      if (mode === 'shared') {
+        h += '<text x="10" y="36">共用佇列</text>';
+        q.all.forEach((t, k) => h += chip(t, 90 + k * 40, 18));
+        h += '<text class="dim" x="90" y="76">單一 Worker 只能依序處理，最前面卡住就全部等待</text>';
+      } else {
+        [['P', '推播佇列'], ['E', 'Email 佇列'], ['S', '簡訊佇列（服務商掛了）']].forEach(([t, name], r) => {
+          const y = 8 + r * 40;
+          h += `<text x="10" y="${y + 19}" style="font-size:12px">${name.slice(0, 5)}</text>`;
+          q[t].forEach((u, k) => h += chip(u, 90 + k * 40, y));
+        });
+      }
+      h += `<text x="10" y="160">已送達：${stat()}</text>`;
+      svg.innerHTML = h;
+      next.disabled = mode === 'shared' ? !q.all.length : !(q.P.length || q.E.length);
+    }
+
+    document.querySelectorAll('#queue-demo [data-mode]').forEach(btn => btn.addEventListener('click', () => {
+      mode = btn.dataset.mode;
+      document.querySelectorAll('#queue-demo [data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+      reset();
+    }));
+    next.addEventListener('click', step);
+    $('queue-reset').addEventListener('click', reset);
+    reset();
+  })();
+
+  // ---- 3. dedupe ----
+  (function () {
+    const range = $('dd-range'), svg = $('dd-svg'), cap = $('dd-caption'), nEl = $('dd-n');
+    let dedupe = false;
+    function render() {
+      const n = +range.value, got = dedupe ? 1 : n;
+      nEl.textContent = n;
+      let h = `<text x="10" y="24">佇列投遞 ${n} 次</text>`;
+      for (let k = 0; k < n; k++) h += `<g class="item s-A"><rect x="${150 + k * 44}" y="6" width="36" height="26" rx="4"/></g>`;
+      h += `<text x="10" y="70">使用者收到 ${got} 次</text>`;
+      for (let k = 0; k < got; k++) h += `<rect x="${150 + k * 44}" y="52" width="36" height="26" rx="4" fill="${got > 1 ? '#b4473a' : '#16745b'}" opacity="0.7"/>`;
+      svg.innerHTML = h;
+      cap.className = 'caption ' + (got > 1 ? 'bad' : 'ok');
+      cap.textContent = dedupe
+        ? '事件 ID 只認第一次，之後的投遞都被丟棄，使用者只收到一次。'
+        : (n > 1 ? `沒有去重：每次投遞都真的送出，使用者被打擾 ${n} 次。` : '只投遞一次，沒問題；但無法保證永遠只有一次。');
+    }
+    range.addEventListener('input', render);
+    document.querySelectorAll('#dedupe-demo [data-dd]').forEach(btn => btn.addEventListener('click', () => {
+      dedupe = btn.dataset.dd === 'on';
+      document.querySelectorAll('#dedupe-demo [data-dd]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+      render();
+    }));
+    render();
+  })();
+
+  // ---- 4. causal chain ----
+  (function () {
+    const rows = [
+      ['b', '起點：單一伺服器查資料＋呼叫第三方'],
+      ['p', '問題：單點故障、渠道互相拖慢'],
+      ['s', '解法：拆出狀態＋每個渠道一條佇列'],
+      ['p', '問題：失敗會遺失、重送會重複'],
+      ['s', '解法：通知紀錄＋重試＋事件 ID 去重'],
+      ['p', '問題：使用者被轟炸、不想收的也收到'],
+      ['s', '解法：使用者設定＋限流＋範本'],
+      ['p', '問題：看不見系統狀況'],
+      ['s', '解法：佇列監控＋事件追蹤']
+    ];
+    let h = '<defs><marker id="ca" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#5e6a63"/></marker></defs>';
+    rows.forEach(([kind, text], k) => {
+      const y = 6 + k * 76;
+      if (k) h += `<path class="chain-arrow" d="M240 ${y - 26} V${y - 2}" marker-end="url(#ca)"/>`;
+      h += `<g class="chain-box ${kind}"><rect x="10" y="${y}" width="460" height="48" rx="6"/><text x="240" y="${y + 29}" text-anchor="middle">${esc(text)}</text></g>`;
+    });
+    $('chain-svg').innerHTML = h;
+  })();
+</script>
+</body>
+</html>
