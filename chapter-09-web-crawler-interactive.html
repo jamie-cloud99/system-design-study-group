@@ -482,7 +482,7 @@
         <thead><tr><th>系統</th><th>對應本章的設計點</th></tr></thead>
         <tbody>
           <tr><td>Scrapy</td><td>預設有請求去重（以請求指紋比對）、<code>ROBOTSTXT_OBEY</code> 設定與自動節流（AutoThrottle），分別對應 URL Seen、robots.txt 與禮貌延遲。</td></tr>
-          <tr><td>Googlebot</td><td>遵守 <code>robots.txt</code>；Google 的文件說明它不支援 <code>Crawl-delay</code>，抓取速率由 Google 自己調整。</td></tr>
+          <tr><td>Googlebot</td><td>遵守 <code>robots.txt</code>；Google 2019 年的官方部落格說明 <code>Crawl-delay</code> 不在它支援的規則內（Bing 則支援）。</td></tr>
           <tr><td>Common Crawl</td><td>公開的網頁抓取資料集，爬蟲標示為 CCBot，適合想看大規模抓取成果、又不想自己抓的人。</td></tr>
         </tbody>
       </table>

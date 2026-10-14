@@ -80,8 +80,8 @@
 
 下面是公開文件中可對照本章的設計點，細節以官方文件為準。
 
-- **Scrapy**：預設有請求去重、`ROBOTSTXT_OBEY` 設定與 AutoThrottle，對應 URL Seen、robots.txt 與禮貌延遲。
-- **Googlebot**：遵守 `robots.txt`；Google 文件說明不支援 `Crawl-delay`，速率由 Google 自行調整。
+- **Scrapy**：預設以請求指紋去重，另有 `ROBOTSTXT_OBEY` 與 AutoThrottle 設定（專案範本預設開啟 robots 遵守），對應 URL Seen、robots.txt 與禮貌延遲。
+- **Googlebot**：遵守 `robots.txt`；Google 2019 年的官方部落格說明 `Crawl-delay` 不在它支援的規則內（Bing 則支援）。
 - **Common Crawl**：公開的網頁抓取資料集，爬蟲標示為 CCBot。
 
 ---
