@@ -38,7 +38,7 @@ For each target file:
 3. If `pages[filename]` exists:
    - Run `ntn pages update <page_id>` with the stripped content via stdin
    - PATCH `v1/pages/<page_id>` with `{"properties":{"Name":{"title":[{"text":{"content":"<title>"}}]}}}` to update the title
-4. If not → run `ntn pages create --parent database:<database_id> --title "<extracted_title>"` with the stripped content via stdin, capture the returned page_id
+4. If not → run `ntn pages create --parent database:<database_id> --json` with the stripped content via stdin (this `ntn` has no `--title` flag; the page is created with an empty title), capture the returned `id`, then PATCH `v1/pages/<id>` with the title as in step 3. Always run `ntn api` with `</dev/null`, otherwise it can hang waiting on stdin
 5. Record the new page_id into `pages[filename]`
 
 ### Step 4: Save notion-pages.json
