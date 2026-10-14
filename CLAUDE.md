@@ -13,8 +13,9 @@ Files follow the pattern `chapter-NN-kebab-case-title.md`. Chapters written so f
 - `chapter-02-back-of-the-envelope-estimation.md` ✅
 - `chapter-03-system-design-interview-framework.md` ✅
 - `chapter-04-design-a-rate-limiter.md` ✅
+- `chapter-05` through `chapter-09` ✅ (see the files in the repo root)
 
-Chapters 05–15 are documented in README.md but not yet written.
+Chapters 10–15 are documented in README.md but not yet written.
 
 ## Lecture Note Format
 
@@ -26,6 +27,15 @@ Every chapter must follow this exact structure:
 4. **Sections with ⚠️ transitions** — each major section opens by referencing the problem left by the previous section, then introduces the solution
 5. **面試 Q&A** — 2 questions per section: one conceptual ("什麼是 X？") and one decision-based ("什麼時候用 X？")
 6. **讀書會討論題 (Discussion questions)** — 4 scenario questions grounded in frontend engineers' daily experience
+
+## Pipeline-Type Chapters (CH09, 10, 14, 15)
+
+Chapters that describe a pipeline of components that all exist at once (crawler, notification, YouTube, Google Drive) use a different format. Evolution-type chapters (CH01–08, 11–13) keep the format above.
+
+- **Two files:** a simplified `chapter-NN-design-a-xxx.md` (pushed to Notion, links to the HTML) and an interactive `chapter-NN-xxx-interactive.html` (same shared design system and verification steps as the quick guides, plus the demos below).
+- **Order:** 核心思路 → trace one request through the pipeline → component breakdown (analogy + trade-off) → 真實系統怎麼取捨 → 面試模擬 (3–4 questions) → 討論題 → 因果鏈 last, as a visual recap.
+- **Demos are inline SVG + vanilla JS step-through**, no libraries: a "next step" button moves a dot through the components. Respect `prefers-reduced-motion`, keep wide SVGs in a horizontally scrollable wrapper on mobile, and never put user input into `innerHTML`.
+- **Real-system claims** (Scrapy, Googlebot, etc.) must be checked against official docs before publishing.
 
 ## Content Conventions
 
