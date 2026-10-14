@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>網路爬蟲互動講義｜第九章</title>
+<style>
+  :root {
+    --paper: #f7f8f5;
+    --surface: #ffffff;
+    --ink: #17201b;
+    --muted: #5e6a63;
+    --line: #d8ddd9;
+    --problem: #b4473a;
+    --solution: #16745b;
+    --system: #245f9e;
+    --warning: #9a6a12;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", sans-serif;
+    line-height: 1.7;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 13rem minmax(0, 48rem);
+    gap: 3rem;
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 6rem;
+  }
+
+  nav.progress-nav {
+    position: sticky;
+    top: 2rem;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    border-left: 2px solid var(--line);
+    padding-left: 0.9rem;
+    height: max-content;
+  }
+
+  nav.progress-nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  nav.progress-nav a[aria-current="location"] {
+    color: var(--system);
+    background: rgba(36, 95, 158, 0.08);
+    font-weight: 600;
+  }
+
+  main { min-width: 0; }
+
+  .concept-section {
+    padding: 2.25rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .concept-section:last-of-type { border-bottom: none; }
+
+  h1 { font-size: 1.9rem; margin: 0 0 0.5rem; }
+  h2 { font-size: 1.5rem; margin: 0 0 1rem; }
+  h3 { font-size: 1.05rem; margin: 0 0 0.5rem; }
+
+  .eyebrow {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: var(--problem);
+    font-weight: 700;
+    margin: 0 0 0.4rem;
+  }
+
+  .meta { color: var(--muted); font-size: 0.9rem; }
+
+  .analogy {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--warning);
+    border-radius: 0.4rem;
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+  }
+
+  .concept-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin: 1.25rem 0;
+  }
+
+  .concept-grid section {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 1.1rem 1.2rem;
+    min-width: 0;
+  }
+
+  .concept-grid section[aria-label="怎麼做"] { border-top: 3px solid var(--solution); }
+  .concept-grid section[aria-label="代價"] { border-top: 3px solid var(--warning); }
+  .concept-grid p:first-child { margin-top: 0; }
+  .concept-grid p:last-child { margin-bottom: 0; }
+
+  .takeaway {
+    background: rgba(22, 116, 91, 0.08);
+    border-radius: 0.4rem;
+    padding: 0.85rem 1.1rem;
+    margin: 0;
+  }
+
+  ol.plain-steps { margin: 0; padding-left: 1.2rem; }
+  ol.plain-steps li { margin-bottom: 0.4rem; }
+  ol.plain-steps li:last-child { margin-bottom: 0; }
+
+  pre.diagram {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.92rem;
+  }
+
+  th, td { text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; }
+
+  code {
+    background: rgba(23, 32, 27, 0.06);
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.25rem;
+    font-size: 0.9em;
+  }
+
+  details {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.8rem;
+  }
+
+  summary { cursor: pointer; font-weight: 600; }
+  details p { margin: 0.7rem 0 0; color: var(--muted); }
+
+  :focus-visible { outline: 3px solid var(--system); outline-offset: 3px; }
+
+  /* interactive demos */
+  .demo { margin: 1.25rem 0; }
+
+  .svg-wrap {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .svg-wrap svg { display: block; width: 100%; height: auto; min-width: 560px; }
+  .svg-wrap svg.narrow { min-width: 0; max-width: 30rem; margin: 0 auto; }
+  svg text { fill: var(--ink); font-size: 14px; font-family: inherit; }
+  svg text.dim { fill: var(--muted); font-size: 12px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; align-items: center; }
+
+  button, input[type="text"] {
+    font: inherit;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: 0.4rem;
+  }
+
+  button { cursor: pointer; }
+  button[aria-pressed="true"] {
+    border-color: var(--system);
+    color: var(--system);
+    font-weight: 600;
+    background: rgba(36, 95, 158, 0.08);
+  }
+  button:disabled { opacity: 0.45; cursor: default; }
+  input[type="text"] { flex: 1 1 14rem; min-width: 0; }
+  input[type="range"] { flex: 1 1 12rem; }
+
+  .caption {
+    min-height: 3.4em;
+    margin: 0.5rem 0 0;
+    padding: 0.7rem 1rem;
+    border-left: 3px solid var(--system);
+    background: rgba(36, 95, 158, 0.06);
+    border-radius: 0.3rem;
+  }
+
+  .caption.bad { border-left-color: var(--problem); background: rgba(180, 71, 58, 0.07); }
+  .caption.ok { border-left-color: var(--solution); background: rgba(22, 116, 91, 0.08); }
+
+  pre.log {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.7rem 1rem;
+    font-size: 0.82rem;
+    min-height: 3.2em;
+    margin: 0.5rem 0 0;
+    overflow-x: auto;
+  }
+
+  /* trace diagram */
+  .node rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .node.done rect { stroke: var(--solution); }
+  .node.on rect { fill: rgba(36, 95, 158, 0.12); stroke: var(--system); stroke-width: 3; }
+  .node.drop rect { fill: rgba(180, 71, 58, 0.12); stroke: var(--problem); stroke-width: 3; }
+  .edge { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+  #dot { fill: var(--system); }
+  #dot-g { transition: transform 450ms ease; }
+
+  /* frontier + bloom */
+  .item rect { stroke-width: 1.5; }
+  .s-A rect { fill: rgba(36, 95, 158, 0.15); stroke: var(--system); }
+  .s-B rect { fill: rgba(22, 116, 91, 0.15); stroke: var(--solution); }
+  .s-C rect { fill: rgba(154, 106, 18, 0.15); stroke: var(--warning); }
+  .box rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .box.hot rect { fill: rgba(180, 71, 58, 0.12); stroke: var(--problem); }
+  .bit rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .bit.set rect { fill: rgba(22, 116, 91, 0.25); stroke: var(--solution); }
+  .bit.probe rect { stroke: var(--system); stroke-width: 3.5; }
+
+  .chain-box rect { stroke-width: 1.5; }
+  .chain-box.p rect { fill: rgba(180, 71, 58, 0.08); stroke: var(--problem); }
+  .chain-box.s rect { fill: rgba(22, 116, 91, 0.08); stroke: var(--solution); }
+  .chain-box.b rect { fill: rgba(36, 95, 158, 0.08); stroke: var(--system); }
+  .chain-arrow { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .js .concept-section { animation: reveal 320ms ease-out both; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #dot-g { transition: none; }
+  }
+
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 780px) {
+    .shell { display: block; padding: 1.5rem 1rem 4rem; }
+    nav.progress-nav {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      flex-direction: row;
+      overflow-x: auto;
+      border-left: none;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+      padding: 0.6rem 0.2rem;
+      margin-bottom: 1.5rem;
+      white-space: nowrap;
+    }
+    .concept-grid { grid-template-columns: 1fr; }
+    table { display: block; overflow-x: auto; }
+    .concept-section { scroll-margin-top: 4.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="progress-nav" aria-label="章節導覽">
+    <a href="#recap">需求與規模</a>
+    <a href="#trace">追蹤一個網址</a>
+    <a href="#frontier">URL Frontier</a>
+    <a href="#downloader">下載端</a>
+    <a href="#dedupe">去重</a>
+    <a href="#trap">Spider Trap</a>
+    <a href="#real">真實系統</a>
+    <a href="#chain">因果鏈</a>
+    <a href="#check">面試模擬</a>
+  </nav>
+
+  <main>
+    <section id="recap" class="concept-section">
+      <p class="eyebrow">先看規模</p>
+      <h1>網路爬蟲・互動講義</h1>
+      <p class="meta">第九章・給前端工程師的系統設計讀書會・可在現場一邊討論一邊操作</p>
+      <p>爬蟲是一個無限迴圈：從種子網址出發，下載頁面、抽出新連結、再把新連結排進待抓清單。抓一頁很簡單，難的是規模：要抓得快、不能搞垮別人的網站、不重複做白工，還要躲開爬不完的陷阱。</p>
+      <table>
+        <thead><tr><th>假設（書中設定）</th><th>快速估算</th></tr></thead>
+        <tbody>
+          <tr><td>每月蒐集 10 億頁</td><td>平均約 400 頁／秒，尖峰以 2 倍計約 800 頁／秒</td></tr>
+          <tr><td>平均每頁 500 KB</td><td>約 500 TB／月</td></tr>
+          <tr><td>保存 5 年</td><td>約 30 PB，需要分散式儲存</td></tr>
+        </tbody>
+      </table>
+      <div class="analogy">🏗️ 你的 SPA 對爬蟲來說，可能只是 <code>&lt;div id="root"&gt;&lt;/div&gt;</code>。爬蟲下載到什麼，才是它能索引的內容。</div>
+    </section>
+
+    <section id="trace" class="concept-section">
+      <p class="eyebrow">先看全貌</p>
+      <h2>一個網址會經過哪些元件？</h2>
+      <p>選一種情境，用「下一步」讓小圓點帶你走完。三種結局：成功入庫並產生新網址、因重複內容被丟棄、因網址已見過被丟棄。</p>
+      <div class="demo" id="trace-demo">
+        <div class="controls" role="group" aria-label="情境">
+          <button type="button" data-sc="new" aria-pressed="true">新頁面</button>
+          <button type="button" data-sc="dup" aria-pressed="false">重複內容</button>
+          <button type="button" data-sc="seen" aria-pressed="false">已見過的網址</button>
+        </div>
+        <div class="svg-wrap">
+          <svg viewBox="0 0 750 270" role="img" aria-label="爬蟲處理一個網址的元件流程">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="#5e6a63"/>
+              </marker>
+            </defs>
+            <g marker-end="url(#arrow)">
+              <path class="edge" d="M90 44 V78" marker-end="url(#arrow)"/>
+              <path class="edge" d="M160 102 H208" marker-end="url(#arrow)"/>
+              <path class="edge" d="M350 102 H398" marker-end="url(#arrow)"/>
+              <path class="edge" d="M540 102 H588" marker-end="url(#arrow)"/>
+              <path class="edge" d="M660 124 V208" marker-end="url(#arrow)"/>
+              <path class="edge" d="M590 232 H542" marker-end="url(#arrow)"/>
+              <path class="edge" d="M400 232 H352" marker-end="url(#arrow)"/>
+              <path class="edge" d="M210 232 H162" marker-end="url(#arrow)"/>
+              <path class="edge" d="M90 210 V126" marker-end="url(#arrow)"/>
+            </g>
+            <g class="node" data-node="seed"><rect x="20" y="8" width="140" height="36" rx="6"/><text x="90" y="31" text-anchor="middle">種子網址</text></g>
+            <g class="node" data-node="frontier"><rect x="20" y="80" width="140" height="44" rx="6"/><text x="90" y="107" text-anchor="middle">URL Frontier</text></g>
+            <g class="node" data-node="downloader"><rect x="210" y="80" width="140" height="44" rx="6"/><text x="280" y="107" text-anchor="middle">HTML Downloader</text></g>
+            <g class="node" data-node="parser"><rect x="400" y="80" width="140" height="44" rx="6"/><text x="470" y="107" text-anchor="middle">內容解析器</text></g>
+            <g class="node" data-node="contentseen"><rect x="590" y="80" width="140" height="44" rx="6"/><text x="660" y="107" text-anchor="middle">Content Seen?</text></g>
+            <g class="node" data-node="storage"><rect x="590" y="210" width="140" height="44" rx="6"/><text x="660" y="237" text-anchor="middle">內容儲存</text></g>
+            <g class="node" data-node="extractor"><rect x="400" y="210" width="140" height="44" rx="6"/><text x="470" y="237" text-anchor="middle">URL 抽取器</text></g>
+            <g class="node" data-node="filter"><rect x="210" y="210" width="140" height="44" rx="6"/><text x="280" y="237" text-anchor="middle">URL 過濾器</text></g>
+            <g class="node" data-node="urlseen"><rect x="20" y="210" width="140" height="44" rx="6"/><text x="90" y="237" text-anchor="middle">URL Seen?</text></g>
+            <g id="dot-g"><circle id="dot" r="8" cx="0" cy="0"/></g>
+          </svg>
+        </div>
+        <p class="caption" id="trace-caption" aria-live="polite"></p>
+        <div class="controls">
+          <button type="button" id="trace-prev">上一步</button>
+          <button type="button" id="trace-next">下一步</button>
+          <button type="button" id="trace-reset">重來</button>
+        </div>
+      </div>
+      <p class="takeaway"><strong>一句話：</strong>爬蟲的每個元件都在回答一個問題：這個網址能不能抓、抓回來的內容有沒有價值、抽出來的連結值不值得再抓。後面幾節逐一拆開。</p>
+    </section>
+
+    <section id="frontier" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>單一佇列會把同一個網站灌爆</h2>
+      <p>大站的首頁一次抽出上千個連結，如果全丟進同一個 FIFO 佇列，幾個 worker 會同時打同一個網站。對方受不了，我們也會被封鎖。切換模式，按「下一輪」比較。</p>
+      <div class="demo" id="frontier-demo">
+        <div class="controls" role="group" aria-label="佇列模式">
+          <button type="button" data-mode="fifo" aria-pressed="true">單一 FIFO 佇列</button>
+          <button type="button" data-mode="site" aria-pressed="false">每站一條佇列＋冷卻</button>
+        </div>
+        <div class="svg-wrap"><svg id="frontier-svg" viewBox="0 0 570 180" role="img" aria-label="URL Frontier 佇列與 worker 狀態"></svg></div>
+        <div class="controls">
+          <button type="button" id="frontier-next">下一輪</button>
+          <button type="button" id="frontier-reset">重來</button>
+        </div>
+        <pre class="log" id="frontier-log" aria-live="polite"></pre>
+      </div>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>兩層佇列</h3>
+          <p><strong>前置佇列</strong>依優先級（PageRank、流量、更新頻率）決定先抓誰。<strong>後置佇列</strong>每個網站一條，由固定的 worker 處理，兩次下載之間加入延遲。</p>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>待抓網址可達數億筆，全放記憶體撐不住，全放硬碟又慢。常見折衷是主要資料放硬碟、記憶體保留緩衝區。還要定期重抓，才能維持新鮮度。</p>
+        </section>
+      </div>
+      <p class="takeaway"><strong>一句話：</strong>前置佇列管「先抓誰」，後置佇列管「別灌爆同一站」。</p>
+    </section>
+
+    <section id="downloader" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>排好隊了，下載本身還是慢，而且不一定被歡迎</h2>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>讓下載又快又有禮貌</h3>
+          <ol class="plain-steps">
+            <li>先讀並快取對方的 <code>robots.txt</code>，遵守不許爬的路徑。</li>
+            <li>DNS 查詢可能要 10–200 ms，把「網域 → IP」存快取並定期更新。</li>
+            <li>依主機名稱把網址分給多台伺服器，用第五章的一致性雜湊分配。</li>
+            <li>設定逾時，慢網站不能拖住 worker。</li>
+          </ol>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>多機要處理故障與狀態：定期把 Frontier 保存成檢查點，單頁失敗不能拖垮全局。<code>robots.txt</code> 與 DNS 快取過期時，會用到舊資料。</p>
+        </section>
+      </div>
+      <p class="takeaway"><strong>一句話：</strong>遵守 robots.txt 是禮貌，也是避免被封鎖的最低成本做法。</p>
+    </section>
+
+    <section id="dedupe" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>同一個網址要怎麼只抓一次？數十億個網址放得進記憶體嗎？</h2>
+      <p><strong>內容去重</strong>：對頁面內容算雜湊（例如 SHA-1），比對雜湊值，比逐字比較便宜。<strong>網址去重</strong>：Bloom Filter 用很少記憶體回答「這個網址是否可能見過」。下面用 32 個位元、3 個雜湊函式的小濾網，親手造出一次誤判。</p>
+      <div class="demo" id="bloom-demo">
+        <div class="controls">
+          <input type="text" id="bloom-input" value="https://a.com/page/1" aria-label="網址">
+          <button type="button" id="bloom-add">加入</button>
+          <button type="button" id="bloom-query">查詢</button>
+        </div>
+        <div class="controls">
+          <button type="button" id="bloom-bulk">批量加入 10 個</button>
+          <button type="button" id="bloom-fp">找一個誤判</button>
+          <button type="button" id="bloom-reset">重設</button>
+        </div>
+        <div class="svg-wrap"><svg id="bloom-svg" viewBox="0 0 586 110" role="img" aria-label="Bloom Filter 的 32 個位元"></svg></div>
+        <p class="caption" id="bloom-caption" aria-live="polite">先加入幾個網址，再查詢看看。</p>
+      </div>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>Bloom Filter 的行為</h3>
+          <p>說「沒見過」時一定正確；說「見過」時可能誤判。所以不會重複抓取，但少數新網址可能被漏掉。</p>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>位元越滿誤判越多，標準版本也不能刪除元素。若漏抓一頁的代價很高，要改用精確集合或資料庫，Bloom Filter 只作前置篩選。</p>
+        </section>
+      </div>
+      <p class="takeaway"><strong>一句話：</strong>用「可能漏抓一點」換「記憶體省一大截」，爬蟲通常付得起這個價錢。</p>
+    </section>
+
+    <section id="trap" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>有些網站會產生無窮多個網址</h2>
+      <div class="analogy">🏗️ 想像一個日曆元件，每個月都有「下個月」連結，人看了會停，爬蟲會一直點下去。</div>
+      <p>拖動滑桿，看網址如何越爬越長，以及長度上限（這裡設為 128 字元）何時把它擋下。</p>
+      <div class="demo" id="trap-demo">
+        <div class="controls">
+          <label for="trap-range">目錄重複次數</label>
+          <input type="range" id="trap-range" min="1" max="40" value="3">
+        </div>
+        <div class="svg-wrap"><svg id="trap-svg" viewBox="0 0 580 60" role="img" aria-label="網址長度與上限"></svg></div>
+        <p class="caption" id="trap-caption" aria-live="polite"></p>
+      </div>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>設上限</h3>
+          <p>限制網址最大長度、爬取深度與單站頁數；異常網域加入黑名單。動態渲染的頁面可先做伺服器端渲染再解析。</p>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>很難全自動偵測，需要人工審查。上限設太低會誤殺正常的長網址。</p>
+        </section>
+      </div>
+      <p class="takeaway"><strong>一句話：</strong>長度上限是便宜的第一道防線，不是萬靈丹。</p>
+    </section>
+
+    <section id="real" class="concept-section">
+      <p class="eyebrow">接上現實</p>
+      <h2>真實系統怎麼取捨？</h2>
+      <p>下面是各專案公開文件中可以對照本章的設計點，實際細節請以官方文件為準。</p>
+      <table>
+        <thead><tr><th>系統</th><th>對應本章的設計點</th></tr></thead>
+        <tbody>
+          <tr><td>Scrapy</td><td>預設有請求去重（以請求指紋比對）、<code>ROBOTSTXT_OBEY</code> 設定與自動節流（AutoThrottle），分別對應 URL Seen、robots.txt 與禮貌延遲。</td></tr>
+          <tr><td>Googlebot</td><td>遵守 <code>robots.txt</code>；Google 的文件說明它不支援 <code>Crawl-delay</code>，抓取速率由 Google 自己調整。</td></tr>
+          <tr><td>Common Crawl</td><td>公開的網頁抓取資料集，爬蟲標示為 CCBot，適合想看大規模抓取成果、又不想自己抓的人。</td></tr>
+        </tbody>
+      </table>
+      <p class="takeaway"><strong>一句話：</strong>書上的理想設計，在實務上常被簡化成「尊重 robots、控制速率、去重」三件事。</p>
+    </section>
+
+    <section id="chain" class="concept-section">
+      <p class="eyebrow">回頭整理</p>
+      <h2>因果鏈：為什麼是這個順序？</h2>
+      <p>現在你認識每個元件了，回頭看每一步是被什麼問題逼出來的。</p>
+      <div class="svg-wrap"><svg id="chain-svg" class="narrow" viewBox="0 0 480 700" role="img" aria-label="爬蟲設計的因果鏈"></svg></div>
+      <table>
+        <thead><tr><th>問題</th><th>解法</th><th>代價</th></tr></thead>
+        <tbody>
+          <tr><td>同站被灌爆、重要頁面沒先抓</td><td>URL Frontier 兩層佇列</td><td>要放硬碟並維持緩衝區</td></tr>
+          <tr><td>下載慢、DNS 與 robots 反覆查</td><td>分散式 Downloader、快取</td><td>多機狀態與快取過期</td></tr>
+          <tr><td>重複網址與重複內容</td><td>URL Seen、Content Seen</td><td>Bloom Filter 的誤判</td></tr>
+          <tr><td>Spider Trap</td><td>長度與深度上限、黑名單</td><td>難自動偵測、可能誤殺</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="check" class="concept-section">
+      <p class="eyebrow">自我檢查</p>
+      <h2>面試模擬</h2>
+      <details>
+        <summary>為什麼爬蟲通常用 BFS 而不是 DFS？單純 BFS 還缺什麼？</summary>
+        <p>網頁圖可能很深，DFS 容易鑽進無底洞。BFS 逐層擴散，較容易先覆蓋靠近種子的頁面。但單純 BFS 沒有禮貌與優先級，所以需要 URL Frontier 的兩層佇列。</p>
+      </details>
+      <details>
+        <summary>Bloom Filter 為什麼適合 URL Seen？什麼時候不能只靠它？</summary>
+        <p>它用很少記憶體就能快速判斷「可能見過」。限制是會誤判，少數新網址被漏抓。當漏抓任何一頁的代價很高，或需要刪除元素時，要改用精確集合或資料庫。</p>
+      </details>
+      <details>
+        <summary>DNS 查詢什麼時候會變成瓶頸？怎麼處理？</summary>
+        <p>每次下載都做同步 DNS 查詢，而一次要數十到數百毫秒時，吞吐量會被卡住。自建 DNS 快取並定期更新，可明顯降低開銷。</p>
+      </details>
+      <details>
+        <summary>你的 SPA 首頁原始 HTML 只有一個空 div，搜尋引擎會看到什麼？</summary>
+        <p>只看到空殼，除非爬蟲會執行 JavaScript。主流搜尋引擎能渲染，但成本高、收錄可能延遲。用 SSR 或預先渲染，讓初始 HTML 就有主要內容，比較穩妥。</p>
+      </details>
+    </section>
+  </main>
+</div>
+
+<script>
+  document.documentElement.classList.add('js');
+
+  // ---- nav active state ----
+  const links = [...document.querySelectorAll('.progress-nav a')];
+  const byId = new Map(links.map(link => [link.hash.slice(1), link]));
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries.filter(entry => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      links.forEach(link => link.removeAttribute('aria-current'));
+      byId.get(visible.target.id)?.setAttribute('aria-current', 'location');
+    }, { rootMargin: '-20% 0px -65%', threshold: [0, 0.2, 0.6] });
+
+    document.querySelectorAll('main > section[id]').forEach(section => observer.observe(section));
+  }
+
+  const $ = id => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg';
+  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  // ---- 1. trace one URL ----
+  const SCENARIOS = {
+    new: [
+      ['seed', '種子網址 https://a.com/ 是爬蟲的起點。'],
+      ['frontier', '進入 URL Frontier：依優先級與網站分到對應佇列，等 a.com 的 worker 有空。'],
+      ['downloader', 'Downloader 查 DNS 快取與 robots.txt 快取，允許後下載頁面，並設有逾時。'],
+      ['parser', '內容解析器驗證 HTML 是否完整、有沒有壞掉。'],
+      ['contentseen', '計算內容雜湊並比對：沒見過，是新內容。'],
+      ['storage', '把內容存進內容儲存。'],
+      ['extractor', '抽出頁面裡的連結，並把相對路徑補成完整網址。'],
+      ['filter', '過濾黑名單與不支援的副檔名（例如 .jpg）。'],
+      ['urlseen', '查 URL Seen（Bloom Filter）：這個新網址沒見過。'],
+      ['frontier', '新網址加回 Frontier，迴圈繼續。', 'ok']
+    ],
+    dup: [
+      ['frontier', 'https://b.com/copy 排到了。'],
+      ['downloader', '下載頁面。'],
+      ['parser', 'HTML 格式正常。'],
+      ['contentseen', '內容雜湊與已存的頁面相同，這是重複內容。', 'drop', '丟棄：不存、也不再抽連結。']
+    ],
+    seen: [
+      ['extractor', '（接續成功入庫的頁面）抽出了一個連結 https://a.com/about。'],
+      ['filter', '格式與副檔名都通過。'],
+      ['urlseen', 'Bloom Filter 回答「可能見過」，這個網址已經抓過。', 'drop', '丟棄：不再加入 Frontier。']
+    ]
+  };
+
+  (function () {
+    const root = $('trace-demo');
+    const nodes = Object.fromEntries([...root.querySelectorAll('.node')].map(g => [g.dataset.node, g]));
+    const center = {};
+    for (const [id, g] of Object.entries(nodes)) {
+      const r = g.querySelector('rect');
+      center[id] = [+r.getAttribute('x') + +r.getAttribute('width') / 2, +r.getAttribute('y') + +r.getAttribute('height') / 2];
+    }
+    const dot = $('dot-g');
+    const caption = $('trace-caption');
+    let sc = 'new', i = 0;
+
+    function render() {
+      const steps = SCENARIOS[sc];
+      Object.values(nodes).forEach(g => g.setAttribute('class', 'node'));
+      steps.slice(0, i).forEach(s => nodes[s[0]].classList.add('done'));
+      const [id, text, flag, extra] = steps[i];
+      nodes[id].classList.remove('done');
+      nodes[id].classList.add(flag === 'drop' ? 'drop' : 'on');
+      dot.style.transform = `translate(${center[id][0]}px, ${center[id][1]}px)`;
+      caption.className = 'caption' + (flag === 'drop' ? ' bad' : flag === 'ok' ? ' ok' : '');
+      caption.textContent = `第 ${i + 1} / ${steps.length} 步：${text}${extra ? ' ' + extra : ''}`;
+      $('trace-prev').disabled = i === 0;
+      $('trace-next').disabled = i === steps.length - 1;
+    }
+
+    root.querySelectorAll('[data-sc]').forEach(btn => btn.addEventListener('click', () => {
+      sc = btn.dataset.sc; i = 0;
+      root.querySelectorAll('[data-sc]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+      render();
+    }));
+    $('trace-next').addEventListener('click', () => { i++; render(); });
+    $('trace-prev').addEventListener('click', () => { i--; render(); });
+    $('trace-reset').addEventListener('click', () => { i = 0; render(); });
+    render();
+  })();
+
+  // ---- 2. frontier politeness ----
+  (function () {
+    const svg = $('frontier-svg'), log = $('frontier-log'), next = $('frontier-next');
+    const COOLDOWN = 1;
+    let mode = 'fifo', q, cd, tick, last, states;
+
+    function reset() {
+      q = [['A', 1], ['A', 2], ['A', 3], ['A', 4], ['B', 1], ['B', 2], ['C', 1]];
+      cd = { A: 0, B: 0, C: 0 };
+      tick = 0; last = []; states = {};
+      log.textContent = '按「下一輪」，每輪讓 worker 各自取一個網址。';
+      render();
+    }
+
+    function step() {
+      if (!q.length) return;
+      tick++;
+      let taken = [], line;
+      if (mode === 'fifo') {
+        taken = q.splice(0, 3);
+        const counts = {};
+        taken.forEach(u => counts[u[0]] = (counts[u[0]] || 0) + 1);
+        const [site, n] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+        line = `第 ${tick} 輪：${taken.map(u => u.join('')).join(' ')}` + (n > 1 ? `  ⚠ 同一瞬間 ${n} 個請求打到 site${site}` : '');
+      } else {
+        for (const s of ['A', 'B', 'C']) {
+          if (cd[s] > 0) { cd[s]--; states[s] = '冷卻中'; continue; }
+          const k = q.findIndex(u => u[0] === s);
+          if (k < 0) { states[s] = '閒置'; continue; }
+          const u = q.splice(k, 1)[0];
+          taken.push(u); cd[s] = COOLDOWN; states[s] = '抓 ' + u.join('');
+        }
+        line = `第 ${tick} 輪：${taken.length ? taken.map(u => u.join('')).join(' ') : '（全部冷卻中）'}，每站最多一個請求`;
+      }
+      last = taken;
+      log.textContent = (log.textContent.startsWith('按') ? '' : log.textContent + '\n') + line;
+      render();
+    }
+
+    const item = (u, x, y) => `<g class="item s-${u[0]}"><rect x="${x}" y="${y}" width="40" height="32" rx="4"/><text x="${x + 20}" y="${y + 21}" text-anchor="middle">${u.join('')}</text></g>`;
+
+    function render() {
+      let h = '';
+      if (mode === 'fifo') {
+        h += '<text x="10" y="42">共用佇列</text>';
+        q.forEach((u, k) => h += item(u, 90 + k * 46, 24));
+        for (let k = 0; k < 3; k++) {
+          const u = last[k];
+          const clash = u && last.filter(v => v[0] === u[0]).length > 1;
+          h += `<g class="box${clash ? ' hot' : ''}"><rect x="${90 + k * 150}" y="110" width="140" height="38" rx="5"/><text x="${160 + k * 150}" y="134" text-anchor="middle">worker ${k + 1}：${u ? u.join('') : '閒置'}</text></g>`;
+        }
+        h += '<text class="dim" x="90" y="172">3 個 worker 每輪各取佇列最前面的網址，不管是哪個網站</text>';
+      } else {
+        ['A', 'B', 'C'].forEach((s, r) => {
+          const y = 12 + r * 54;
+          h += `<text x="10" y="${y + 21}">site${s}</text>`;
+          q.filter(u => u[0] === s).forEach((u, k) => h += item(u, 80 + k * 46, y));
+          const st = states[s] || '待命';
+          h += `<g class="box"><rect x="380" y="${y}" width="170" height="32" rx="5"/><text x="465" y="${y + 21}" text-anchor="middle">worker：${st}</text></g>`;
+        });
+      }
+      svg.innerHTML = h;
+      next.disabled = !q.length;
+    }
+
+    document.querySelectorAll('#frontier-demo [data-mode]').forEach(btn => btn.addEventListener('click', () => {
+      mode = btn.dataset.mode;
+      document.querySelectorAll('#frontier-demo [data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+      reset();
+    }));
+    next.addEventListener('click', step);
+    $('frontier-reset').addEventListener('click', reset);
+    reset();
+  })();
+
+  // ---- 3. bloom filter ----
+  const BITS = 32, HASHES = 3;
+  function bloomPositions(str) {
+    const out = [];
+    for (let seed = 1; seed <= HASHES; seed++) {
+      let x = (2166136261 ^ Math.imul(seed, 16777619)) >>> 0;
+      for (let c = 0; c < str.length; c++) x = Math.imul(x ^ str.charCodeAt(c), 16777619) >>> 0;
+      out.push(x % BITS);
+    }
+    return out;
+  }
+
+  (function () {
+    const svg = $('bloom-svg'), cap = $('bloom-caption'), input = $('bloom-input');
+    let bits, added, probe, bulkN;
+
+    function reset() {
+      bits = new Array(BITS).fill(false); added = new Set(); probe = []; bulkN = 0;
+      input.value = 'https://a.com/page/1';
+      say('先加入幾個網址，再查詢看看。', '');
+      render();
+    }
+    function say(text, cls) { cap.className = 'caption ' + cls; cap.textContent = text; }
+    function render() {
+      let h = '';
+      for (let i = 0; i < BITS; i++) {
+        const x = 10 + (i % 16) * 36, y = i < 16 ? 10 : 62;
+        const cls = 'bit' + (bits[i] ? ' set' : '') + (probe.includes(i) ? ' probe' : '');
+        h += `<g class="${cls}"><rect x="${x}" y="${y}" width="32" height="30" rx="4"/><text x="${x + 16}" y="${y + 20}" text-anchor="middle">${bits[i] ? 1 : 0}</text></g>`;
+      }
+      svg.innerHTML = h;
+    }
+    function add(url) { bloomPositions(url).forEach(p => bits[p] = true); added.add(url); }
+    function query(url) {
+      const pos = bloomPositions(url);
+      probe = pos; render();
+      const lit = bits.filter(Boolean).length;
+      const where = `（檢查位元 ${[...new Set(pos)].join('、')}；目前點亮 ${lit} / ${BITS}）`;
+      if (!pos.every(p => bits[p])) return say(`一定沒見過：有位元是 0。${where}`, 'ok');
+      if (added.has(url)) return say(`可能見過，而且確實加入過。${where}`, 'ok');
+      say(`誤判！這個網址從沒加入過，但檢查的位元剛好都被別的網址點亮。${where}`, 'bad');
+    }
+
+    $('bloom-add').addEventListener('click', () => {
+      const url = input.value.trim(); if (!url) return;
+      add(url); probe = bloomPositions(url); render();
+      say(`已加入，點亮位元 ${[...new Set(probe)].join('、')}。目前共 ${added.size} 個網址。`, '');
+    });
+    $('bloom-query').addEventListener('click', () => { const url = input.value.trim(); if (url) query(url); });
+    $('bloom-bulk').addEventListener('click', () => {
+      for (let n = 0; n < 10; n++) add(`https://site.com/p/${++bulkN}`);
+      probe = []; render();
+      say(`已批量加入，共 ${added.size} 個網址，點亮 ${bits.filter(Boolean).length} / ${BITS} 位元。`, '');
+    });
+    $('bloom-fp').addEventListener('click', () => {
+      for (let n = 0; n < 20000; n++) {
+        const url = `https://q.com/p/${n}`;
+        if (!added.has(url) && bloomPositions(url).every(p => bits[p])) { input.value = url; return query(url); }
+      }
+      say('位元還太空，找不到誤判。先按「批量加入 10 個」。', '');
+    });
+    $('bloom-reset').addEventListener('click', reset);
+    reset();
+  })();
+
+  // ---- 4. spider trap ----
+  (function () {
+    const LIMIT = 128, SCALE = 1.6, range = $('trap-range'), svg = $('trap-svg'), cap = $('trap-caption');
+    function render() {
+      const url = 'www.trap.com/' + 'foo/bar/'.repeat(+range.value);
+      const over = url.length > LIMIT;
+      svg.innerHTML = `<rect x="10" y="10" width="${Math.min(url.length * SCALE, 560)}" height="22" rx="4" fill="${over ? '#b4473a' : '#16745b'}" opacity="0.7"/>`
+        + `<line x1="${10 + LIMIT * SCALE}" x2="${10 + LIMIT * SCALE}" y1="4" y2="38" stroke="#17201b" stroke-width="2" stroke-dasharray="4 3"/>`
+        + `<text class="dim" x="${10 + LIMIT * SCALE + 6}" y="52">上限 ${LIMIT}</text>`;
+      cap.className = 'caption ' + (over ? 'bad' : 'ok');
+      cap.textContent = `網址長度 ${url.length} 字元，${over ? '超過上限，丟棄。' : '在上限內，繼續抓。'}  ${url.length > 70 ? url.slice(0, 70) + '…' : url}`;
+    }
+    range.addEventListener('input', render);
+    render();
+  })();
+
+  // ---- 5. causal chain ----
+  (function () {
+    const rows = [
+      ['b', '起點：BFS 骨架（下載→抽連結→回佇列）'],
+      ['p', '問題：同站被灌爆、重要頁面沒先抓'],
+      ['s', '解法：URL Frontier 兩層佇列'],
+      ['p', '問題：下載慢、DNS 與 robots 反覆查'],
+      ['s', '解法：分散式 Downloader ＋ 快取'],
+      ['p', '問題：重複網址、重複內容'],
+      ['s', '解法：URL Seen ＋ Content Seen'],
+      ['p', '問題：Spider Trap 爬不完'],
+      ['s', '解法：長度／深度上限 ＋ 黑名單']
+    ];
+    let h = '<defs><marker id="ca" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#5e6a63"/></marker></defs>';
+    rows.forEach(([kind, text], k) => {
+      const y = 6 + k * 76;
+      if (k) h += `<path class="chain-arrow" d="M240 ${y - 26} V${y - 2}" marker-end="url(#ca)"/>`;
+      h += `<g class="chain-box ${kind}"><rect x="10" y="${y}" width="460" height="48" rx="6"/><text x="240" y="${y + 29}" text-anchor="middle">${esc(text)}</text></g>`;
+    });
+    $('chain-svg').innerHTML = h;
+  })();
+</script>
+</body>
+</html>
