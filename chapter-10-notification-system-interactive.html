@@ -311,7 +311,7 @@
 
   <main>
     <section id="recap" class="concept-section">
-      <p class="eyebrow">先看規模</p>
+      <p class="eyebrow">先估算規模</p>
       <h1>通知系統・互動講義</h1>
       <p class="meta">第十章・給前端工程師的系統設計讀書會・可在現場一邊討論一邊操作</p>
       <p>通知系統是一條管線：事件發生，查出要通知誰、怎麼通知，再交給第三方送出。送一則很簡單，難的是可靠：第三方會失敗、會變慢，使用者不想被重複打擾，而且一個渠道出事不能拖垮其他渠道。</p>
@@ -324,6 +324,32 @@
           <tr><td>Email</td><td>自架或商用（書中舉 SendGrid、Mailchimp）</td><td>Email 位址</td></tr>
         </tbody>
       </table>
+      <h3>先估算：這個規模需要什麼配置？</h3>
+      <table>
+        <thead><tr><th>渠道</th><th>每天</th><th>平均每秒</th><th>尖峰每秒（×2）</th></tr></thead>
+        <tbody>
+          <tr><td>推播</td><td>1,000 萬</td><td>約 116</td><td>約 232</td></tr>
+          <tr><td>Email</td><td>500 萬</td><td>約 58</td><td>約 116</td></tr>
+          <tr><td>簡訊</td><td>100 萬</td><td>約 12</td><td>約 24</td></tr>
+          <tr><td>合計</td><td>1,600 萬</td><td>約 185</td><td>約 370</td></tr>
+        </tbody>
+      </table>
+      <p class="meta">每天數量 ÷ 86,400。尖峰以 2 倍計是沿用第二章的慣例，書中沒給尖峰倍數。</p>
+      <p>尖峰才約 370 則／秒，通知伺服器本身不是瓶頸。難的是下游：每次呼叫第三方要等多久，決定了同時要有多少呼叫在途。拖動滑桿（延遲是我的假設，不是書中數字）：</p>
+      <div class="demo" id="est-demo">
+        <div class="controls">
+          <label for="est-range">呼叫第三方的延遲</label>
+          <input type="range" id="est-range" min="50" max="1000" step="50" value="200">
+          <span id="est-ms">200 ms</span>
+        </div>
+        <div class="svg-wrap"><svg id="est-svg" viewBox="0 0 580 120" role="img" aria-label="尖峰時各渠道同時在途的呼叫數"></svg></div>
+        <p class="caption" id="est-caption" aria-live="polite"></p>
+      </div>
+      <details class="more">
+        <summary>突發與儲存的估算（我的假設）</summary>
+        <p><strong>突發：</strong>活動一次推播給 500 萬人，以尖峰 232 則／秒要送約 6 小時；想在 10 分鐘內送完，要約 8,300 則／秒，在 200 ms 下約 1,700 個同時在途的呼叫。佇列吸收突發，Worker 數量決定要排多久，這也是要監控佇列積壓量的原因。</p>
+        <p><strong>通知紀錄：</strong>每天 1,600 萬筆，假設每筆 1 KB，約 16 GB／天、約 5.8 TB／年，需要設保存期限。</p>
+      </details>
       <details class="more">
         <summary>細節：書中的需求設定與聯絡資訊</summary>
         <table>
@@ -559,6 +585,26 @@
 
   const $ = id => document.getElementById(id);
   const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  // ---- 0. estimation ----
+  (function () {
+    const PEAK = [['推播', 232], ['Email', 116], ['簡訊', 24]];
+    const range = $('est-range'), svg = $('est-svg'), cap = $('est-caption'), ms = $('est-ms');
+    function render() {
+      const lat = +range.value / 1000;
+      ms.textContent = range.value + ' ms';
+      const conc = PEAK.map(([n, r]) => [n, r, Math.ceil(r * lat)]);
+      let h = '';
+      conc.forEach(([n, r, c], k) => {
+        const y = 8 + k * 36;
+        h += `<text x="10" y="${y + 18}">${n}</text><rect x="70" y="${y}" width="${Math.max(2, c * 0.55)}" height="24" rx="4" fill="#245f9e" opacity="0.7"/><text class="dim" x="${70 + Math.max(2, c * 0.55) + 8}" y="${y + 17}">${c} 個同時在途</text>`;
+      });
+      svg.innerHTML = h;
+      cap.textContent = `尖峰 ${PEAK.map(p => p[0] + ' ' + p[1]).join('、')} 則／秒 × ${lat} 秒 = 同時在途呼叫數（Little 定律）。第三方越慢，需要的並行度越高。`;
+    }
+    range.addEventListener('input', render);
+    render();
+  })();
 
   // ---- 1. trace one notification ----
   const SCENARIOS = {
