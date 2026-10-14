@@ -320,13 +320,24 @@
         <tbody>
           <tr><td>iOS 推播</td><td>Apple APNs</td><td>裝置 token</td></tr>
           <tr><td>Android 推播</td><td>Google FCM</td><td>裝置 token</td></tr>
-          <tr><td>簡訊</td><td>簡訊服務商</td><td>手機號碼</td></tr>
-          <tr><td>Email</td><td>Email 服務商</td><td>Email 位址</td></tr>
+          <tr><td>簡訊</td><td>商用服務（書中舉 Twilio、Nexmo）</td><td>手機號碼</td></tr>
+          <tr><td>Email</td><td>自架或商用（書中舉 SendGrid、Mailchimp）</td><td>Email 位址</td></tr>
         </tbody>
       </table>
       <details class="more">
-        <summary>細節：聯絡資訊怎麼來、規模多大？</summary>
-        <p>使用者安裝 App 或註冊時，後端取得並存下 token、電話與 Email。一個使用者可以有多台裝置，所以「使用者」與「裝置」要分開存。書中的目標是軟即時（越快越好，忙時允許稍慢），規模為每天數百萬則。</p>
+        <summary>細節：書中的需求設定與聯絡資訊</summary>
+        <table>
+          <thead><tr><th>項目</th><th>書中設定</th></tr></thead>
+          <tbody>
+            <tr><td>即時性</td><td>軟即時：越快越好，忙時允許稍慢</td></tr>
+            <tr><td>裝置</td><td>iOS、Android、桌機／筆電</td></tr>
+            <tr><td>觸發</td><td>用戶端應用程式，或伺服器端排程</td></tr>
+            <tr><td>退訂</td><td>選擇退出的使用者不再收到通知</td></tr>
+            <tr><td>每天規模</td><td>1,000 萬則推播、100 萬則簡訊、500 萬封 Email</td></tr>
+          </tbody>
+        </table>
+        <p>使用者安裝 App 或註冊時，API 伺服器把聯絡資訊存進資料庫：<strong>使用者表</strong>放 Email 與手機號碼，<strong>裝置表</strong>放裝置 token。一個使用者可有多台裝置，所以一則推播能送到全部。</p>
+        <p>書中也強調第三方要能抽換：例如 FCM 在中國無法使用，要改用 Jpush、PushY 之類的服務。</p>
       </details>
       <div class="analogy">🏗️ 你在 App 按下「允許通知」，其實是在登記「這台裝置可以被叫醒」的憑證。後端存的就是這些憑證。</div>
     </section>
@@ -400,7 +411,7 @@
         </section>
         <section aria-label="代價">
           <h3>代價</h3>
-          <p>多了佇列要維運，通知也不再同步送出：呼叫端拿到的是「已收件」，不是「已送達」。</p>
+          <p>多了佇列要維運，通知也不再同步送出，呼叫端拿到的多半只是「已收件」而不是「已送達」（我的推論，書中未明說）。</p>
         </section>
       </div>
       <p class="takeaway"><strong>一句話：</strong>佇列不只用來緩衝，也用來把故障關在自己的渠道裡。</p>
@@ -409,7 +420,7 @@
     <section id="reliable" class="concept-section">
       <p class="eyebrow">現在的問題</p>
       <h2>送失敗要重送，重送又會重複</h2>
-      <p>書中的立場：無法保證恰好一次。網路出問題時，訊息可能被重新投遞，所以做法是「至少一次」加上去重：每則通知帶事件 ID，Worker 送出前先檢查是否處理過。拖動滑桿決定同一則訊息被投遞幾次，再切換去重。</p>
+      <p>書中的答案是：不保證恰好一次，分散式系統偶爾會出現重複。做法是去重：事件進來時檢查事件 ID，見過就丟棄，沒見過才送。書中也說這只能減少重複，不能完全消除。拖動滑桿決定同一則訊息被投遞幾次，再切換去重。</p>
       <div class="demo" id="dedupe-demo">
         <div class="controls">
           <label for="dd-range">同一則訊息被投遞次數</label>
@@ -427,19 +438,19 @@
         <section aria-label="怎麼做">
           <h3>三道保險</h3>
           <ol class="plain-steps">
-            <li><strong>通知紀錄</strong>：先寫紀錄再入佇列，失敗時可以還原，不靜默遺失。</li>
-            <li><strong>重試</strong>：送失敗放回佇列再試，超過上限就告警。</li>
+            <li><strong>通知紀錄</strong>：書中原則是通知可以延遲、可以亂序，但絕不能遺失，所以存進通知紀錄資料庫。</li>
+            <li><strong>重試</strong>：送失敗放回佇列，重試預先設定的次數，持續失敗就通知開發者。</li>
             <li><strong>去重</strong>：以事件 ID 檢查是否處理過。</li>
           </ol>
         </section>
         <section aria-label="代價">
           <h3>代價</h3>
-          <p>去重要多查一次儲存，紀錄與去重表會一直成長，需要設保存期限。極端時間差下仍可能有少數重複，所以通知內容最好本身就能容忍重複。</p>
+          <p>去重要多查一次儲存。書中沒說去重資料存在哪、怎麼過期，資料會持續成長是我的推論。去重只能減少重複，所以通知內容最好本身就能容忍重複。</p>
         </section>
       </div>
       <details class="more">
-        <summary>細節：重試的等待時間為什麼越拉越長？</summary>
-        <p>第三方剛恢復時，如果所有失敗的訊息同時重試，又會把它壓垮。實務上間隔逐步加長（指數退避）。下圖的秒數是示範用設定，不是書中數字；無效 token 之類的錯誤重試也沒用，應直接標記。</p>
+        <summary>補充（非書中）：重試的等待時間為什麼常常越拉越長？</summary>
+        <p>書中沒有給重試次數或間隔。這是實務上的常見做法：第三方剛恢復時，如果所有失敗的訊息同時重試，又會把它壓垮，所以間隔逐步加長（指數退避）。下圖的秒數是示範用設定；無效 token 之類的錯誤重試也沒用。</p>
         <div class="svg-wrap">
           <svg class="narrow" viewBox="0 0 520 170" role="img" aria-label="重試等待時間示意">
             <text x="10" y="24">第 1 次重試</text><rect x="110" y="10" width="20" height="18" rx="4" fill="#245f9e" opacity="0.7"/><text class="dim" x="140" y="24">1 秒</text>
@@ -449,7 +460,7 @@
           </svg>
         </div>
       </details>
-      <p class="takeaway"><strong>一句話：</strong>接受「至少一次」，再用事件 ID 把重複擋在送出之前。</p>
+      <p class="takeaway"><strong>一句話：</strong>重複無法根絕，所以用事件 ID 在送出之前盡量擋掉。</p>
     </section>
 
     <section id="control" class="concept-section">
@@ -459,19 +470,20 @@
         <section aria-label="怎麼做">
           <h3>尊重使用者</h3>
           <ol class="plain-steps">
-            <li><strong>使用者設定</strong>：送出前先查設定，關掉的類型直接丟棄。</li>
-            <li><strong>限流</strong>：限制單一使用者每天收到的數量（呼應第四章）。</li>
-            <li><strong>範本</strong>：格式相近的通知做成範本再填參數，保持一致。</li>
+            <li><strong>使用者設定</strong>：設定表有 <code>user_id</code>、<code>channel</code>、<code>opt_in</code> 三個欄位，每次送出前都檢查。</li>
+            <li><strong>限流</strong>：限制單一使用者收到的通知數量，否則使用者可能乾脆全部關閉（呼應第四章）。</li>
+            <li><strong>範本</strong>：預先排好版、帶參數的格式（如補貨通知填入商品名與日期，附追蹤連結）。好處是格式一致、減少錯誤、省時間。</li>
+            <li><strong>安全性</strong>：推播 API 用 <code>appKey</code>／<code>appSecret</code> 驗證，只有通過驗證的用戶端能呼叫。</li>
           </ol>
         </section>
         <section aria-label="代價">
           <h3>代價</h3>
-          <p>每則通知多一次設定查詢，設定放快取就要面對過期：使用者剛關掉卻還收到。限流太緊也可能擋掉重要通知，所以驗證碼這類要有獨立的優先級。</p>
+          <p>每則通知多一次設定查詢，設定放快取就要面對過期：使用者剛關掉卻還收到（這是我的推論）。限流太緊也可能擋掉重要通知；驗證碼這類通知要不要獨立優先級，書中沒談，是延伸討論。</p>
         </section>
       </div>
       <details class="more">
         <summary>細節：監控與事件追蹤</summary>
-        <p><strong>監控佇列長度</strong>：佇列越堆越多，代表 Worker 不夠或下游出問題，需要加 Worker 或告警。<strong>事件追蹤</strong>：記錄送出、送達、點開等狀態，供分析與調整策略。</p>
+        <p><strong>監控佇列長度</strong>：書中最關鍵的指標是佇列裡等待的通知數，積壓變大代表處理太慢，要加 Worker。<strong>事件追蹤</strong>：接上分析服務，追蹤開啟率、點擊率與互動程度，用來改進策略。</p>
       </details>
       <p class="takeaway"><strong>一句話：</strong>能送出不代表該送出；信任一旦被打擾消耗掉，就很難換回來。</p>
     </section>
@@ -479,7 +491,7 @@
     <section id="real" class="concept-section">
       <p class="eyebrow">接上現實</p>
       <h2>真實系統怎麼取捨？</h2>
-      <p>APNs 與 FCM 是書中點名的推播入口。各家服務商的限制與重試規則不同，實作前請以官方文件為準；本頁的重試次數與秒數都是示範用設定。</p>
+      <p>書中點名的第三方：推播用 APNs 與 FCM，簡訊用 Twilio、Nexmo，Email 用 SendGrid、Mailchimp。各家的限制與重試規則不同，實作前請以官方文件為準。書中沒有指定佇列技術、重試次數與限流門檻，本頁出現的次數與秒數都是示範用設定。</p>
       <p class="takeaway"><strong>一句話：</strong>自己的系統負責「送給誰、送幾次、失敗怎麼辦」，最後一哩路交給第三方。</p>
     </section>
 
@@ -491,7 +503,7 @@
       <table>
         <thead><tr><th>問題</th><th>解法</th><th>代價</th></tr></thead>
         <tbody>
-          <tr><td>單點故障、渠道互相拖慢</td><td>拆出狀態、每渠道一條佇列</td><td>多了佇列；只能回「已收件」</td></tr>
+          <tr><td>單點故障、渠道互相拖慢</td><td>拆出狀態、每渠道一條佇列</td><td>多了佇列要維運</td></tr>
           <tr><td>失敗遺失、重送重複</td><td>通知紀錄、重試、事件 ID 去重</td><td>多一次查詢；紀錄會成長</td></tr>
           <tr><td>使用者被轟炸</td><td>使用者設定、限流、範本</td><td>設定快取過期；限流可能擋重要通知</td></tr>
           <tr><td>看不見系統狀況</td><td>佇列監控、事件追蹤</td><td>多一套指標要維護</td></tr>
@@ -507,15 +519,19 @@
         <p>隔離故障。某個第三方變慢或失敗，只會堆積自己的佇列，其他渠道照常運作；各渠道也可以獨立擴充 Worker 數量。</p>
       </details>
       <details>
+        <summary>為什麼推播 API 要用 appKey／appSecret？</summary>
+        <p>防止任何人冒用我們的系統發通知。只有通過驗證的用戶端才能呼叫。</p>
+      </details>
+      <details>
         <summary>怎麼避免使用者收到重複通知？</summary>
-        <p>不追求恰好一次，而是至少一次加去重：每則通知帶事件 ID，Worker 送出前查是否處理過。</p>
+        <p>書中的答案是無法保證恰好一次，所以用事件 ID 去重：事件進來先檢查，見過就丟棄。這只能減少重複，不能完全消除。</p>
       </details>
       <details>
         <summary>第三方服務掛了，通知會不會遺失？</summary>
-        <p>先寫通知紀錄再入佇列，失敗時重試，超過上限進入告警或人工處理。重點是不靜默丟失。</p>
+        <p>書中原則是通知可以延遲、亂序，但不能遺失：存進通知紀錄資料庫，失敗時放回佇列重試預先設定的次數，持續失敗就通知開發者。</p>
       </details>
       <details>
-        <summary>行銷通知和驗證碼要不要共用佇列？</summary>
+        <summary>（延伸，非書中）行銷通知和驗證碼要不要共用佇列？</summary>
         <p>不要。大量行銷通知會把驗證碼擋在後面。依優先級分開佇列與 Worker。</p>
       </details>
     </section>
@@ -548,23 +564,23 @@
   const SCENARIOS = {
     ok: [
       ['upstream', '訂單服務發出事件：「訂單 #1001 已出貨」，呼叫通知 API。'],
-      ['server', '通知伺服器驗證請求，並替這則通知產生事件 ID。'],
-      ['settings', '查使用者設定與聯絡資訊：有開啟出貨通知，有一個 iOS 裝置 token。'],
-      ['log', '先寫進通知紀錄，之後失敗才能還原。'],
-      ['queue', '放進 iOS 推播佇列，呼叫端此時就拿到「已收件」。'],
-      ['worker', 'Worker 取出訊息，檢查事件 ID 沒處理過，套用範本後呼叫第三方。'],
+      ['server', '通知伺服器驗證呼叫端身份（appKey／appSecret）與格式，並帶上這則通知的事件 ID。'],
+      ['settings', '從快取／資料庫查使用者設定與聯絡資訊：有開啟出貨通知（opt_in），有一個 iOS 裝置 token。'],
+      ['log', '寫進通知紀錄資料庫，通知才不會遺失。（書中沒規定紀錄與入佇列的先後，這裡是示意）'],
+      ['queue', '放進 iOS 推播佇列（每種通知類型一條）。'],
+      ['worker', 'Worker 取出訊息，檢查事件 ID 沒見過，套用範本後呼叫第三方。'],
       ['provider', 'APNs 收下並轉送。'],
       ['device', '使用者裝置跳出通知。', 'ok']
     ],
     optout: [
       ['upstream', '行銷系統發出促銷事件。'],
       ['server', '通知伺服器驗證通過。'],
-      ['settings', '查到使用者已關閉行銷通知。', 'drop', '丟棄：不寫紀錄、不入佇列。']
+      ['settings', '查到使用者已關閉行銷通知。', 'drop', '丟棄：不入佇列。']
     ],
     retry: [
       ['queue', '（接續入佇列之後）iOS 推播佇列有一則待送訊息。'],
       ['worker', 'Worker 呼叫第三方，對方暫時失敗（逾時）。', 'drop', '這一次沒成功，訊息放回佇列。'],
-      ['queue', '訊息放回佇列，等待一段時間後再試（間隔逐步拉長）。'],
+      ['queue', '訊息放回佇列，預先設定的次數內再試；持續失敗就通知開發者。'],
       ['worker', 'Worker 再次取出並呼叫第三方。'],
       ['provider', '這次第三方收下了。'],
       ['device', '使用者裝置跳出通知。', 'ok']
