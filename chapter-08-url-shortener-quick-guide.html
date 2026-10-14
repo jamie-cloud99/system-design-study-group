@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>短網址系統十分鐘快速版｜第八章</title>
+<style>
+  :root {
+    --paper: #f7f8f5;
+    --surface: #ffffff;
+    --ink: #17201b;
+    --muted: #5e6a63;
+    --line: #d8ddd9;
+    --problem: #b4473a;
+    --solution: #16745b;
+    --system: #245f9e;
+    --warning: #9a6a12;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", sans-serif;
+    line-height: 1.7;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 13rem minmax(0, 48rem);
+    gap: 3rem;
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 6rem;
+  }
+
+  nav.progress-nav {
+    position: sticky;
+    top: 2rem;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    border-left: 2px solid var(--line);
+    padding-left: 0.9rem;
+    height: max-content;
+  }
+
+  nav.progress-nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  nav.progress-nav a[aria-current="location"] {
+    color: var(--system);
+    background: rgba(36, 95, 158, 0.08);
+    font-weight: 600;
+  }
+
+  main { min-width: 0; }
+
+  .concept-section {
+    padding: 2.25rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .concept-section:last-of-type { border-bottom: none; }
+
+  h1 { font-size: 1.9rem; margin: 0 0 0.5rem; }
+  h2 { font-size: 1.5rem; margin: 0 0 1rem; }
+  h3 { font-size: 1.05rem; margin: 0 0 0.5rem; }
+
+  .eyebrow {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: var(--problem);
+    font-weight: 700;
+    margin: 0 0 0.4rem;
+  }
+
+  .meta {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .analogy {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--warning);
+    border-radius: 0.4rem;
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+  }
+
+  .concept-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin: 1.25rem 0;
+  }
+
+  .concept-grid section {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 1.1rem 1.2rem;
+    min-width: 0;
+  }
+
+  .concept-grid section[aria-label="怎麼做"] { border-top: 3px solid var(--solution); }
+  .concept-grid section[aria-label="代價"] { border-top: 3px solid var(--warning); }
+
+  .concept-grid p:first-child { margin-top: 0; }
+
+  .takeaway {
+    background: rgba(22, 116, 91, 0.08);
+    border-radius: 0.4rem;
+    padding: 0.85rem 1.1rem;
+    margin: 0;
+  }
+
+  ol.plain-steps {
+    margin: 0;
+    padding-left: 1.2rem;
+  }
+
+  ol.plain-steps li { margin-bottom: 0.4rem; }
+  ol.plain-steps li:last-child { margin-bottom: 0; }
+
+  pre.diagram {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.92rem;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  th { color: var(--muted); font-weight: 600; }
+
+  code {
+    background: rgba(23, 32, 27, 0.06);
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.25rem;
+    font-size: 0.9em;
+  }
+
+  details {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.8rem;
+  }
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  summary:focus-visible { outline: 3px solid var(--system); outline-offset: 3px; }
+
+  details p { margin: 0.7rem 0 0; color: var(--muted); }
+
+  :focus-visible {
+    outline: 3px solid var(--system);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .js .concept-section { animation: reveal 320ms ease-out both; }
+  }
+
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 780px) {
+    .shell { display: block; padding: 1.5rem 1rem 4rem; }
+    nav.progress-nav {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      flex-direction: row;
+      overflow-x: auto;
+      border-left: none;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+      padding: 0.6rem 0.2rem;
+      margin-bottom: 1.5rem;
+      white-space: nowrap;
+    }
+    .concept-grid { grid-template-columns: 1fr; }
+    table { display: block; overflow-x: auto; }
+    .concept-section { scroll-margin-top: 4.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="progress-nav" aria-label="章節導覽">
+    <a href="#recap">需求與規模</a>
+    <a href="#codes">短碼</a>
+    <a href="#create">建立</a>
+    <a href="#redirect">重導向</a>
+    <a href="#cache">快取</a>
+    <a href="#summary">總覽</a>
+    <a href="#check">自我檢查</a>
+  </nav>
+
+  <main>
+    <section id="recap" class="concept-section">
+      <p class="eyebrow">先看流量形狀</p>
+      <h1>短網址系統・十分鐘快速版</h1>
+      <p class="meta">第八章快速導覽・給前端工程師的系統設計讀書會</p>
+      <p>短網址只有兩件核心工作：建立時保存「短碼 → 長網址」，點擊時查回原網址並讓瀏覽器跳轉。但一個連結建立一次，可能被點擊數萬次，所以讀取路徑會比建立路徑更忙。</p>
+      <pre class="diagram">[建立] 長網址 → 分配短碼 → 保存對應 → 回傳短網址
+[點擊] 短網址 → 查回長網址 → HTTP 302 → [原網站]</pre>
+      <table>
+        <thead><tr><th>假設</th><th>快速估算</th></tr></thead>
+        <tbody>
+          <tr><td>每天建立 1 億筆</td><td>平均約 1,160 次寫入／秒</td></tr>
+          <tr><td>讀寫比 10：1</td><td>平均約 11,600 次讀取／秒</td></tr>
+          <tr><td>保存 10 年</td><td>約 3,650 億筆對應關係</td></tr>
+          <tr><td>平均長網址 100 bytes</td><td>約 36.5 TB 原文；未含索引及複本</td></tr>
+        </tbody>
+      </table>
+      <div class="analogy">🏗️ 行銷活動把帶參數的網址放進簡訊。短連結方便分享，但活動一爆紅，原本只建立過一次的連結會被大量重複讀取。</div>
+    </section>
+
+    <section id="codes" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>3,650 億筆資料，要多少短碼才裝得下？</h2>
+      <p>使用數字與大小寫英文字母，共有 62 種字元。六位短碼只有約 568 億種；七位則約有 3.52 兆種，足以容納估算筆數。</p>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>唯一 ID → Base62</h3>
+          <p>先領不重複的整數 ID，再換成 62 進位短碼。Base62 是編碼，不是雜湊或加密；只要 ID 唯一且不截斷，短碼就唯一。</p>
+          <pre class="diagram">[ID 分配器] → 125 → [Base62] → 21
+                           ↓
+                    [短碼 → 長網址]</pre>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>要管理 ID 分配器；連續碼容易被猜。第七章的 64-bit Snowflake ID 轉 Base62 可能長達 11 字元，不能直接保證七字元。</p>
+        </section>
+      </div>
+      <p>如果改用長網址雜湊後截短，雖然省去 ID 分配器，仍要處理碰撞與重試。無論選哪一種，資料庫短碼索引都要守住唯一性；Base62 區分大小寫，索引也必須如此。</p>
+      <p class="takeaway"><strong>一句話：</strong>「七位有足夠組合」只是容量估算；產碼方法還要保證唯一、控制數值範圍並處理可猜測性。</p>
+    </section>
+
+    <section id="create" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>短碼產生了，對應關係要如何可靠地留下？</h2>
+      <p>建立 API 必須等資料庫提交成功，才能把短網址回傳給前端。連結同時寫入時，資料庫的短碼唯一約束是最後一道防線。</p>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>建立流程</h3>
+          <ol class="plain-steps">
+            <li>驗證長網址格式，只接受 <code>http/https</code>。</li>
+            <li>領唯一 ID，轉成 Base62 短碼。</li>
+            <li>儲存 <code>short_code → long_url</code>。</li>
+            <li>提交成功後回傳 <code>201</code> 與短網址。</li>
+          </ol>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>若請求已成功但回應遺失，前端重試可能建立第二個短碼。需要「同一次操作只建立一次」時，加入冪等鍵並以唯一約束保存結果。</p>
+        </section>
+      </div>
+      <div class="analogy">🏗️ 使用者按下建立按鈕後遇到網路逾時，畫面不知道是否成功。前端沿用同一個冪等鍵重試，後端就能回傳第一次建立的短網址。</div>
+      <p class="takeaway"><strong>一句話：</strong>同一長網址可以有不同短碼；冪等鍵只讓「同一次建立操作」的重試回到同一結果。</p>
+    </section>
+
+    <section id="redirect" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>使用者點短連結，瀏覽器該怎麼前往原網址？</h2>
+      <p>短連結可能來自簡訊或 QR Code，不一定會進入你的前端應用。伺服器直接回傳 HTTP 重導向與 <code>Location</code>，瀏覽器就會向原網站發出下一個請求。</p>
+      <pre class="diagram">[瀏覽器] GET /aB39xY7
+    ↓
+[短網址服務] 查得 https://example.com/campaign
+    ↓
+302 Found + Location: https://example.com/campaign
+    ↓
+[瀏覽器] GET https://example.com/campaign</pre>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>本章選 302</h3>
+          <p><code>302</code> 表示暫時跳轉。若希望後續點擊仍經過短網址服務，以便記錄事件，可選 302 並明確設定快取標頭。</p>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>每次點擊都可能回到服務端，讀取流量較高。若改用 <code>301</code>，瀏覽器可能記住永久跳轉，之後不再請求短網址服務。</p>
+        </section>
+      </div>
+      <p class="takeaway"><strong>一句話：</strong>301 減少服務流量；302 較容易逐次觀測。查無短碼回 404，建立時須拒絕不安全的 URL 協定。</p>
+    </section>
+
+    <section id="cache" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>熱門短碼反覆查資料庫，怎麼縮短跳轉時間？</h2>
+      <p>把常用的「短碼 → 長網址」放進伺服器端快取。這是快取旁路：先查快取，未命中才查權威資料庫並回填。</p>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>讀取路徑</h3>
+          <pre class="diagram">[GET /短碼]
+    ↓
+[快取] ─ 命中 → 302
+    ↓ 未命中
+[資料庫]
+    ↓
+回填快取 → 302</pre>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>快取失效時要受控地回退資料庫；大量熱門短碼同時過期，可能造成瞬間回源。剛建立的連結也不能因為讀取複本延遲或舊 404 快取而暫時打不開。</p>
+        </section>
+      </div>
+      <p>點擊統計可非同步處理，避免分析系統拖慢跳轉。建立 API 可沿用第四章的限流器；公開連結也要考慮惡意網址與掃碼，但限流不能誤傷多人共用的熱門連結。</p>
+      <p class="takeaway"><strong>一句話：</strong>快取加速的是讀取，資料庫仍是真相；故障時先保住跳轉，再依業務需求處理統計完整性。</p>
+    </section>
+
+    <section id="summary" class="concept-section">
+      <p class="eyebrow">收尾</p>
+      <h2>問題、解法、代價一覽</h2>
+      <table>
+        <thead><tr><th>問題</th><th>解法</th><th>代價</th></tr></thead>
+        <tbody>
+          <tr><td>短碼空間與撞碼</td><td>估算七位容量；唯一 ID + Base62</td><td>發號器、碼長與可猜測性</td></tr>
+          <tr><td>建立請求逾時重試</td><td>提交後回應；必要時加冪等鍵</td><td>要保存並管理操作鍵</td></tr>
+          <tr><td>瀏覽器如何跳轉</td><td>HTTP 302 + Location</td><td>每次點擊可能回到服務端</td></tr>
+          <tr><td>熱門連結重複查詢</td><td>快取短碼對應關係</td><td>過期、回源與剛建立可見性</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="check" class="concept-section">
+      <p class="eyebrow">自我檢查</p>
+      <h2>用自己的話解釋看看</h2>
+      <details>
+        <summary>為什麼「七位 Base62 足夠」不代表 Snowflake 產出的短碼一定是七位？</summary>
+        <p>七位是依預估總筆數算出的容量；Snowflake 本身是 64-bit 整數，數值可能超過 62 的七次方，轉成 Base62 就會超過七位。若七位是硬需求，發號範圍也必須受限制。</p>
+      </details>
+      <details>
+        <summary>前端建立請求逾時後重試，怎麼避免產生兩個連結？</summary>
+        <p>同一次使用者操作沿用同一個冪等鍵。後端把鍵與建立結果一起保存，重試時回傳第一次的短網址；使用者明確再建立一次才換新鍵。</p>
+      </details>
+      <details>
+        <summary>選 301 或 302，對點擊統計有什麼影響？</summary>
+        <p>301 是永久跳轉，客戶端可能記住結果，後續點擊不再經過短網址服務；302 配合合適快取標頭，較容易觀測每次請求，但服務必須承擔讀取流量。</p>
+      </details>
+    </section>
+  </main>
+</div>
+
+<script>
+  document.documentElement.classList.add('js');
+
+  const links = [...document.querySelectorAll('.progress-nav a')];
+  const byId = new Map(links.map(link => [link.hash.slice(1), link]));
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries.filter(entry => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      links.forEach(link => link.removeAttribute('aria-current'));
+      byId.get(visible.target.id)?.setAttribute('aria-current', 'location');
+    }, { rootMargin: '-20% 0px -65%', threshold: [0, 0.2, 0.6] });
+
+    document.querySelectorAll('main > section[id]').forEach(section => observer.observe(section));
+  }
+</script>
+</body>
+</html>
