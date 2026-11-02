@@ -13,9 +13,9 @@ Files follow the pattern `chapter-NN-kebab-case-title.md`. Chapters written so f
 - `chapter-02-back-of-the-envelope-estimation.md` ✅
 - `chapter-03-system-design-interview-framework.md` ✅
 - `chapter-04-design-a-rate-limiter.md` ✅
-- `chapter-05` through `chapter-11` ✅ (see the files in the repo root)
+- `chapter-05` through `chapter-12` ✅ (see the files in the repo root)
 
-Chapters 12–15 are documented in README.md but not yet written.
+Chapters 13–15 are documented in README.md but not yet written.
 
 ## Lecture Note Format
 
