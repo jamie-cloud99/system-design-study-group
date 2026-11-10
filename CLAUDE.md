@@ -19,14 +19,25 @@ Chapters 13–15 are documented in README.md but not yet written.
 
 ## Lecture Note Format
 
-Every chapter must follow this exact structure:
+Every new chapter (CH12 onward) follows this exact structure. CH01–11 predate it (their causal chain sits near the top); leave them alone unless asked.
 
 1. **Header block** — bilingual title (Chinese + English), audience, time estimate, source reference
 2. **核心思路 (Core idea)** — a blockquote stating the chapter's central insight in 2–3 sentences
-3. **本章的因果鏈 (Causal chain)** — an ASCII diagram showing the problem→solution→new-problem progression that drives the whole chapter
-4. **Sections with ⚠️ transitions** — each major section opens by referencing the problem left by the previous section, then introduces the solution
-5. **面試 Q&A** — 2 questions per section: one conceptual ("什麼是 X？") and one decision-based ("什麼時候用 X？")
-6. **讀書會討論題 (Discussion questions)** — 4 scenario questions grounded in frontend engineers' daily experience
+3. **Sections with ⚠️ transitions** — each major section opens by referencing the problem left by the previous section, then introduces the solution
+4. **面試 Q&A** — 2 questions per section: one conceptual ("什麼是 X？") and one decision-based ("什麼時候用 X？")
+5. **讀書會討論題 (Discussion questions)** — 4 scenario questions grounded in frontend engineers' daily experience
+6. **本章的因果鏈（Recap）** — an ASCII diagram of the problem→solution→new-problem progression, placed last (before the next-chapter teaser) as a recap
+
+### CH12 Style (writing rules for all new chapters)
+
+CH12 was rewritten for readability and approved as the model.
+
+- **Short sentences and bullets** instead of paragraphs: one point per line, tables for comparisons.
+- **Every section opens with a 🏗️ 生活比喻** (everyday analogy, e.g. mailbox / phone line / inbox / bookmark) before any technical detail.
+- **Each new term gets its own 📖 名詞小卡**: bold title `📖 **名詞小卡：X（English）**` plus 2–3 bullets. Write it as bold line + plain `- ` bullets, never inside a `>` quote (Notion can't nest lists in quotes). `notion-push` converts it to a blue callout; 🏗️ 比喻 → yellow, ⚠️ 轉場 → orange, 核心思路 → green (script: `.claude/skills/notion-push/scripts/to_notion.py`). Keep those quote lines single-line and starting with the same emoji/bold prefix so the script matches.
+- **Keep the book vs. own-assumption line clear:** label numbers the book doesn't give as 「非書中」.
+- **Real-system comparisons stay short:** only the high-impact facts (numbers, one-line differences), plus source links and a note on anything that is inference.
+- Notion check after pushing: read blocks back with `ntn api /v1/blocks/<id>/children` and confirm no stray `- ` quotes and callout color is `blue_background`.
 
 ## Pipeline-Type Chapters (CH09, 10, 14, 15)
 

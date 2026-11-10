@@ -35,11 +35,17 @@ For each target file:
 
 1. Extract the page title from the first `# Heading` line in the markdown file
 2. Strip the H1 line from the content before pushing (title is set as a page property, not body content)
-3. If `pages[filename]` exists:
+3. Convert the file with `python3 .claude/skills/notion-push/scripts/to_notion.py <file> > <scratchpad>/out.md` and push that output via stdin (the script already drops the H1, so step 2 is done by it). It turns styled blocks into colored callouts; the repo file stays plain Markdown so GitHub renders it:
+   - `📖 **名詞小卡…**` + bullets → 📖 `blue_bg`
+   - `> 🏗️ …` → 🏗️ `yellow_bg`
+   - `> **⚠️ …` → ⚠️ `orange_bg`
+   - `> **核心思路：…` → 💡 `green_bg`
+   - Color names must be `*_bg` (`blue_background` etc. are silently ignored). Notion has no lists inside `>` quotes.
+4. If `pages[filename]` exists:
    - Run `ntn pages update <page_id>` with the stripped content via stdin
    - PATCH `v1/pages/<page_id>` with `{"properties":{"Name":{"title":[{"text":{"content":"<title>"}}]}}}` to update the title
-4. If not → run `ntn pages create --parent database:<database_id> --json` with the stripped content via stdin (this `ntn` has no `--title` flag; the page is created with an empty title), capture the returned `id`, then PATCH `v1/pages/<id>` with the title as in step 3. Always run `ntn api` with `</dev/null`, otherwise it can hang waiting on stdin
-5. Record the new page_id into `pages[filename]`
+5. If not → run `ntn pages create --parent database:<database_id> --json` with the stripped content via stdin (this `ntn` has no `--title` flag; the page is created with an empty title), capture the returned `id`, then PATCH `v1/pages/<id>` with the title as in step 4. Always run `ntn api` with `</dev/null`, otherwise it can hang waiting on stdin
+6. Record the new page_id into `pages[filename]`
 
 ### Step 4: Save notion-pages.json
 
