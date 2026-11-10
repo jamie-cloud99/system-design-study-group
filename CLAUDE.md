@@ -13,9 +13,9 @@ Files follow the pattern `chapter-NN-kebab-case-title.md`. Chapters written so f
 - `chapter-02-back-of-the-envelope-estimation.md` ✅
 - `chapter-03-system-design-interview-framework.md` ✅
 - `chapter-04-design-a-rate-limiter.md` ✅
-- `chapter-05` through `chapter-12` ✅ (see the files in the repo root)
+- `chapter-05` through `chapter-13` ✅ (see the files in the repo root)
 
-Chapters 13–15 are documented in README.md but not yet written.
+Chapters 14–15 are documented in README.md but not yet written.
 
 ## Lecture Note Format
 
@@ -25,7 +25,7 @@ Every new chapter (CH12 onward) follows this exact structure. CH01–11 predate 
 2. **核心思路 (Core idea)** — a blockquote stating the chapter's central insight in 2–3 sentences
 3. **Sections with ⚠️ transitions** — each major section opens by referencing the problem left by the previous section, then introduces the solution
 4. **面試 Q&A** — 2 questions per section: one conceptual ("什麼是 X？") and one decision-based ("什麼時候用 X？")
-5. **讀書會討論題 (Discussion questions)** — 4 scenario questions grounded in frontend engineers' daily experience
+5. **讀書會討論題 (Discussion questions)** — 4 scenario questions grounded in frontend engineers' daily experience; the question stays visible, only the answer is collapsed (see CH12 Style)
 6. **本章的因果鏈（Recap）** — an ASCII diagram of the problem→solution→new-problem progression, placed last (before the next-chapter teaser) as a recap
 
 ### CH12 Style (writing rules for all new chapters)
@@ -35,9 +35,10 @@ CH12 was rewritten for readability and approved as the model.
 - **Short sentences and bullets** instead of paragraphs: one point per line, tables for comparisons.
 - **Every section opens with a 🏗️ 生活比喻** (everyday analogy, e.g. mailbox / phone line / inbox / bookmark) before any technical detail.
 - **Each new term gets its own 📖 名詞小卡**: bold title `📖 **名詞小卡：X（English）**` plus 2–3 bullets. Write it as bold line + plain `- ` bullets, never inside a `>` quote (Notion can't nest lists in quotes). `notion-push` converts it to a blue callout; 🏗️ 比喻 → yellow, ⚠️ 轉場 → orange, 核心思路 → green (script: `.claude/skills/notion-push/scripts/to_notion.py`). Keep those quote lines single-line and starting with the same emoji/bold prefix so the script matches.
+- **Discussion questions: question visible, answer collapsed.** Bold title + question text as normal paragraphs, then `<details><summary>參考解答</summary>` holding only the answer (blank line after `<summary>` and before `</details>`). Never put the question inside the `<summary>`/toggle. `to_notion.py` turns `<details>` into a Notion toggle (indents children with a tab).
 - **Keep the book vs. own-assumption line clear:** label numbers the book doesn't give as 「非書中」.
 - **Real-system comparisons stay short:** only the high-impact facts (numbers, one-line differences), plus source links and a note on anything that is inference.
-- Notion check after pushing: read blocks back with `ntn api /v1/blocks/<id>/children` and confirm no stray `- ` quotes and callout color is `blue_background`.
+- Notion check after pushing: read blocks back with `ntn api /v1/blocks/<id>/children` and confirm no stray `- ` quotes, callout color is `blue_background`, and each discussion toggle is titled 「參考解答」 with the question outside it.
 
 ## Pipeline-Type Chapters (CH09, 10, 14, 15)
 

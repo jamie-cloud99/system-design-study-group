@@ -21,5 +21,11 @@ while i < len(L):
     if m: o += callout('⚠️', 'orange_bg', ['**' + m[1]]); i += 1; continue
     m = re.match(r'> (\*\*核心思路：.*)', l)
     if m: o += callout('💡', 'green_bg', [m[1]]); i += 1; continue
+    if l.strip() == '<details>' or l.startswith('<details'):  # toggle: children must be tab-indented
+        o.append('<details>'); i += 1
+        while i < len(L) and L[i].strip() != '</details>':
+            t = re.sub(r'</?b>', '', L[i])
+            o.append(t if t.startswith('<summary>') else ('\t' + t if t.strip() else t)); i += 1
+        o.append('</details>'); i += 1; continue
     o.append(l); i += 1
 print('\n'.join(o))
