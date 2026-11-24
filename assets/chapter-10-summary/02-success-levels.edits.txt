@@ -1,0 +1,2 @@
+Revision 1
+Edit only one gap in this illustration. Preserve every word, character, title, evidence labels, palette, paper, and other arrows. Between 第三方接受 and 裝置收到, add a FOURTH right-pointing arrow with exact Traditional Chinese label 不保證下一步, same design as the other three arrows. Move the three cloud obstacles slightly upward or make them smaller so this new labelled arrow is visible below them. Keep 離線／過期／系統限制 all readable. The resulting chain has FOUR explicit arrows each labelled 不保證下一步. Do not change any other section or content.

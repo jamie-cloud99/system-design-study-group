@@ -1,0 +1,426 @@
+<title>聊天系統快速版</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  :root {
+    --paper: #f7f8f5;
+    --surface: #ffffff;
+    --ink: #17201b;
+    --muted: #5e6a63;
+    --line: #d8ddd9;
+    --problem: #b4473a;
+    --solution: #16745b;
+    --system: #245f9e;
+    --warning: #9a6a12;
+    --tint-system: rgba(36, 95, 158, 0.08);
+    --tint-solution: rgba(22, 116, 91, 0.08);
+    --tint-ink: rgba(23, 32, 27, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #121714; --surface: #1a211d; --ink: #e8ece9; --muted: #9aa69f;
+      --line: #2e3832; --problem: #e0796b; --solution: #4fbf9f; --system: #6ba6e3; --warning: #d9a441;
+      --tint-system: rgba(107, 166, 227, 0.14); --tint-solution: rgba(79, 191, 159, 0.14); --tint-ink: rgba(232, 236, 233, 0.09);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #121714; --surface: #1a211d; --ink: #e8ece9; --muted: #9aa69f;
+    --line: #2e3832; --problem: #e0796b; --solution: #4fbf9f; --system: #6ba6e3; --warning: #d9a441;
+    --tint-system: rgba(107, 166, 227, 0.14); --tint-solution: rgba(79, 191, 159, 0.14); --tint-ink: rgba(232, 236, 233, 0.09);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 13rem minmax(0, 48rem);
+    gap: 3rem;
+    max-width: 68rem;
+    margin: 0 auto;
+    padding-block: 2.5rem 6rem;
+    padding-left: max(1.5rem, env(safe-area-inset-left, 0px));
+    padding-right: max(1.5rem, env(safe-area-inset-right, 0px));
+  }
+
+  nav.progress-nav {
+    position: sticky;
+    top: 2rem;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    border-left: 2px solid var(--line);
+    padding-left: 0.9rem;
+    height: max-content;
+  }
+
+  nav.progress-nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  nav.progress-nav a[aria-current="location"] {
+    color: var(--system);
+    background: var(--tint-system);
+    font-weight: 600;
+  }
+
+  main { min-width: 0; }
+
+  .concept-section { padding: 2.25rem 0; border-bottom: 1px solid var(--line); }
+  .concept-section:last-of-type { border-bottom: none; }
+
+  h1 { font-size: 1.9rem; margin: 0 0 0.5rem; text-wrap: balance; }
+  h2 { font-size: 1.5rem; margin: 0 0 1rem; text-wrap: balance; }
+  h3 { font-size: 1.05rem; margin: 0 0 0.5rem; }
+
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.75rem;
+    color: var(--problem);
+    font-weight: 700;
+    margin: 0 0 0.4rem;
+  }
+
+  .meta { color: var(--muted); font-size: 0.9rem; }
+
+  .analogy {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--warning);
+    border-radius: 0.4rem;
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+  }
+
+  .concept-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin: 1.25rem 0;
+  }
+
+  .concept-grid section {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 1.1rem 1.2rem;
+    min-width: 0;
+  }
+
+  .concept-grid section[aria-label="怎麼做"] { border-top: 3px solid var(--solution); }
+  .concept-grid section[aria-label="代價"] { border-top: 3px solid var(--warning); }
+  .concept-grid p:first-child { margin-top: 0; }
+  .concept-grid p:last-child { margin-bottom: 0; }
+
+  .takeaway {
+    background: var(--tint-solution);
+    border-radius: 0.4rem;
+    padding: 0.85rem 1.1rem;
+    margin: 0;
+  }
+
+  ol.plain-steps { margin: 0; padding-left: 1.2rem; }
+  ol.plain-steps li { margin-bottom: 0.4rem; }
+  ol.plain-steps li:last-child { margin-bottom: 0; }
+
+  pre.diagram {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+
+  .table-wrap { overflow-x: auto; }
+
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; }
+
+  code {
+    background: var(--tint-ink);
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.25rem;
+    font-size: 0.9em;
+  }
+
+  details {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.8rem;
+  }
+
+  summary { cursor: pointer; font-weight: 600; }
+  details p { margin: 0.7rem 0 0; color: var(--muted); }
+
+  :focus-visible { outline: 3px solid var(--system); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .js .concept-section { animation: reveal 320ms ease-out both; }
+  }
+
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 780px) {
+    .shell {
+      display: block;
+      padding-block: 1.5rem 4rem;
+      padding-left: max(1rem, env(safe-area-inset-left, 0px));
+      padding-right: max(1rem, env(safe-area-inset-right, 0px));
+    }
+    nav.progress-nav {
+      position: sticky;
+      top: env(safe-area-inset-top, 0px);
+      z-index: 1;
+      flex-direction: row;
+      overflow-x: auto;
+      border-left: none;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+      padding: 0.6rem 0.2rem;
+      margin-bottom: 1.5rem;
+      white-space: nowrap;
+    }
+    .concept-grid { grid-template-columns: 1fr; }
+    .concept-section { scroll-margin-top: 4.5rem; }
+  }
+</style>
+
+<div class="shell">
+  <nav class="progress-nav" aria-label="章節導覽">
+    <a href="#recap">需求與規模</a>
+    <a href="#transport">即時傳輸</a>
+    <a href="#stateful">有狀態伺服器</a>
+    <a href="#storage">儲存與 ID</a>
+    <a href="#flow">訊息流程</a>
+    <a href="#presence">上線狀態</a>
+    <a href="#wrap">收尾</a>
+    <a href="#summary">總覽</a>
+    <a href="#check">自我檢查</a>
+  </nav>
+
+  <main>
+    <section id="recap" class="concept-section">
+      <p class="eyebrow">先看規模</p>
+      <h1>聊天系統・十分鐘快速版</h1>
+      <p class="meta">第十二章快速導覽・給前端工程師的系統設計讀書會</p>
+      <p>聊天跟動態牆最大的差別是「即時」：A 送出的那一刻，B 就要看到。同時還要永久保存紀錄、多裝置看到同一份對話，所以連線數才是真正的瓶頸，不是每秒訊息數。</p>
+      <pre class="diagram">[A] 傳訊息 → [聊天伺服器] → 存起來 → [B 在線？]
+                                      ├─ 是 → WebSocket 推給 B
+                                      └─ 否 → 推播通知</pre>
+      <p>書中的需求：一對一與小群組（上限 100 人）、5,000 萬 DAU、純文字、紀錄永久保存、多裝置、手機與網頁。</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>書中的數字</th><th>意義</th></tr></thead>
+          <tbody>
+            <tr><td>5,000 萬 DAU</td><td>需求設定的規模</td></tr>
+            <tr><td>100 萬並發使用者 × 每條連線約 10 KB</td><td>全部連線約 10 GB 記憶體，理論上單機放得下（書中說很粗略）</td></tr>
+            <tr><td>Facebook 與 WhatsApp 合計每天約 600 億則</td><td>感受訊息量級</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="meta">書中沒有給每秒訊息數或儲存量的推算，所以這裡不自己編數字。</p>
+      <div class="analogy">🏗️ 你負責 App 的「訊息」分頁。使用者預期對方送出的瞬間就看到，換手機登入也要看到同一份對話。</div>
+      <p class="takeaway"><strong>一句話：</strong>書中只粗估 100 萬連線約 10 GB 記憶體，但提醒不能把所有連線放在一台，單點故障才是最大問題。</p>
+    </section>
+
+    <section id="transport" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>HTTP 只能客戶端發問，伺服器要怎麼主動把訊息推給 B？</h2>
+      <p>發送端用 HTTP 沒問題；難的是接收端。書中比較三種做法：</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>做法</th><th>運作方式</th><th>問題</th></tr></thead>
+          <tbody>
+            <tr><td>輪詢</td><td>定時問「有新訊息嗎？」</td><td>多半是空回應，間隔長又不即時</td></tr>
+            <tr><td>長輪詢</td><td>伺服器扣著請求，有訊息才回</td><td>收發兩端可能連到不同伺服器；逾時要重連</td></tr>
+            <tr><td>WebSocket</td><td>一條持久的雙向連線</td><td>連線要長期維持，伺服器需管理狀態</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>WebSocket</h3>
+          <p>客戶端先發 HTTP 請求要求升級協定，之後同一條連線改成雙向傳輸。使用 80 或 443 埠，能穿過多數防火牆。收發共用同一條連線，設計最單純。</p>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>連線不斷開，伺服器不再是「請求完就忘記」。同時在線的人數決定要幾台機器。</p>
+        </section>
+      </div>
+      <div class="analogy">🏗️ 你寫過 <code>setInterval(() =&gt; fetch('/messages'), 3000)</code>。使用者一多，伺服器就被「有新的嗎？」淹沒。</div>
+      <p class="takeaway"><strong>一句話：</strong>要即時又頻繁收發，用 WebSocket；更新少、使用者少時，輪詢就夠了。</p>
+    </section>
+
+    <section id="stateful" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>連線一直開著，使用者該連哪一台聊天伺服器？</h2>
+      <p>書中把服務分三類：登入、註冊、個人資料這類<strong>無狀態服務</strong>放負載平衡後面；聊天服務是<strong>有狀態</strong>的，每個客戶端黏在一台伺服器上；推播則是第三方整合。</p>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>服務發現（Service Discovery）</h3>
+          <ol class="plain-steps">
+            <li>使用者登入，經負載平衡到 API 伺服器。</li>
+            <li>驗證後，服務發現依地理位置、伺服器容量挑一台聊天伺服器，回傳給客戶端。</li>
+            <li>客戶端與它建立 WebSocket 連線。</li>
+          </ol>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>要多維護一個服務發現元件（書中以 Apache Zookeeper 為例）。聊天伺服器掛掉時，它也要負責分配新的伺服器，客戶端再重連。</p>
+        </section>
+      </div>
+      <div class="analogy">🏗️ 一般 API 像丟一張紙條就走；WebSocket 像打一通不掛斷的電話，總機必須記得這個人接在哪一條線。</div>
+      <p class="takeaway"><strong>一句話：</strong>有狀態的是聊天伺服器，它要知道誰連在自己這裡；服務發現決定誰連哪一台。</p>
+    </section>
+
+    <section id="storage" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>連線有了，海量的聊天紀錄要存在哪裡？</h2>
+      <p>使用者資料、設定、好友名單量不大，放關聯式資料庫，用複寫與分片擴展。聊天歷史量極大、只增不減，而且多數人只看最近的訊息，偶爾跳回很久以前。</p>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>聊天歷史用 KV 儲存</h3>
+          <p>容易水平擴展、讀取延遲低。關聯式資料庫的索引在長尾資料的隨機存取上很吃力。業界實例：Facebook 用 HBase，Discord 用 Cassandra。</p>
+          <pre class="diagram">一對一：主鍵 message_id
+群組　：主鍵 (channel_id, message_id)
+        分片鍵 channel_id</pre>
+        </section>
+        <section aria-label="代價">
+          <h3>訊息 ID 要夠用</h3>
+          <p>ID 必須唯一且能依時間排序。KV／NoSQL 沒有 <code>auto_increment</code>；<code>created_at</code> 可能撞時間。做法是 Snowflake 這類全域序號，或只在單一對話內唯一的區域序號，順序只在同一個對話內有意義，區域序號更簡單。</p>
+        </section>
+      </div>
+      <p class="takeaway"><strong>一句話：</strong>歷史訊息放 KV；<code>message_id</code> 同時決定順序，也是後面多裝置同步的書籤。</p>
+    </section>
+
+    <section id="flow" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>一則訊息從 A 到 B 怎麼走？換新手機又怎麼補訊息？</h2>
+      <pre class="diagram">[A] 傳訊息
+ ↓ 1. 到聊天伺服器 1
+ ↓ 2. 向 ID 產生器取得 message_id
+ ↓ 3. 送進訊息同步佇列
+ ↓ 4. 存進 KV 儲存
+ ├─ B 在線 → 5a. 轉到 B 的聊天伺服器 2 → 6a. WebSocket 推給 B
+ └─ B 離線 → 5b. 推播通知伺服器發推播</pre>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>多裝置與小群組</h3>
+          <p><strong>多裝置：</strong>每台裝置記錄 <code>cur_max_message_id</code>，同步時取回「接收者是自己、ID 比它大」的訊息。</p>
+          <p><strong>小群組：</strong>寫擴散。訊息複製到每位成員的同步佇列，每人像有自己的收件匣，讀取簡單。</p>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>群組越大，複製份數越多。書中以微信為例，群組上限 500 人，因為這做法不適合大群組。這跟第十一章的 Fanout on write 是同一個取捨：讀取簡單，寫入放大。</p>
+        </section>
+      </div>
+      <div class="analogy">🏗️ 手機的 <code>cur_max_message_id</code> 是 50，網頁是 42。網頁登入時只要補 43 以後的訊息。</div>
+      <p class="takeaway"><strong>一句話：</strong>ID 可排序，所以能當同步書籤；收件匣模式把群組變成「每人讀自己的佇列」。</p>
+    </section>
+
+    <section id="presence" class="concept-section">
+      <p class="eyebrow">現在的問題</p>
+      <h2>好友名單旁那顆綠點，怎麼知道對方在不在線上？</h2>
+      <p>登入時狀態設為 <code>online</code> 並記錄 <code>last_active_at</code>，登出時設為 <code>offline</code>。但手機進電梯、網路瞬間中斷，不代表使用者登出；一斷線就變離線，綠點會一直閃。</p>
+      <div class="concept-grid">
+        <section aria-label="怎麼做">
+          <h3>心跳 + 發布／訂閱</h3>
+          <p>在線的客戶端每隔幾秒（例如 5 秒）送一次心跳；超過設定時間（例如 30 秒）沒收到才判定離線。狀態變化發布到每一對好友的頻道（A-B、A-C…），好友各自訂閱，就收到通知。</p>
+        </section>
+        <section aria-label="代價">
+          <h3>代價</h3>
+          <p>逾時太短會閃爍，太長則離開的人很久才變灰。群組若有十萬人，一次狀態變動要通知十萬人，成本太高。書中建議大群組只在進入群組或手動刷新時才查狀態。</p>
+        </section>
+      </div>
+      <p class="takeaway"><strong>一句話：</strong>心跳加逾時，區分「暫時掉線」與「真的離開」；大群組別主動推狀態。</p>
+    </section>
+
+    <section id="wrap" class="concept-section">
+      <p class="eyebrow">收尾</p>
+      <h2>核心流程都有了，面試還有時間可以談什麼？</h2>
+      <ul>
+        <li><strong>多媒體：</strong>圖片、影片的壓縮、雲端儲存、縮圖。</li>
+        <li><strong>端對端加密：</strong>本章不要求，實際產品常需要。</li>
+        <li><strong>客戶端快取：</strong>減少與伺服器之間的資料傳輸。</li>
+        <li><strong>載入速度：</strong>例如 Slack 的地理分散快取網路 Flannel。</li>
+        <li><strong>錯誤處理：</strong>聊天伺服器故障時由服務發現分配新的伺服器；訊息重送靠重試與佇列。</li>
+      </ul>
+    </section>
+
+    <section id="summary" class="concept-section">
+      <p class="eyebrow">總覽</p>
+      <h2>問題、解法、代價一覽</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>問題</th><th>解法</th><th>代價</th></tr></thead>
+          <tbody>
+            <tr><td>伺服器無法主動推給 B</td><td>WebSocket 雙向長連線</td><td>伺服器變有狀態，連線數成瓶頸</td></tr>
+            <tr><td>使用者該連哪台</td><td>服務發現挑聊天伺服器</td><td>多一個元件要維護</td></tr>
+            <tr><td>歷史訊息海量成長</td><td>KV 儲存 + 可排序的訊息 ID</td><td>要自己處理 ID 產生</td></tr>
+            <tr><td>多裝置與小群組同步</td><td>cur_max_message_id + 收件匣佇列</td><td>群組越大寫入越放大</td></tr>
+            <tr><td>誰在線上</td><td>心跳逾時 + 發布／訂閱</td><td>逾時難調；大群組推送成本高</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="check" class="concept-section">
+      <p class="eyebrow">自我檢查</p>
+      <h2>用自己的話解釋看看</h2>
+      <details>
+        <summary>使用者說「對方畫面上的訊息順序跟我這邊不一樣」，為什麼用 created_at 排序有風險？</summary>
+        <p>兩則訊息可能在同一時間建立，各裝置的時間也有誤差，無法確定先後。應使用可排序的訊息 ID（全域序號或頻道內序號）。</p>
+      </details>
+      <details>
+        <summary>使用者搭電梯斷線 10 秒，綠點閃了一下，該怎麼調整？</summary>
+        <p>心跳逾時要大於一般短暫斷線的時間，例如 30 秒。太短會閃爍，太長則真的離開的人會延遲很久才顯示離線。</p>
+      </details>
+      <details>
+        <summary>WebSocket 斷線重連後漏了幾則訊息，前端要記什麼才補得回來？</summary>
+        <p>記錄目前看到的最大 <code>message_id</code>，重連後向伺服器要 ID 比它大的訊息。</p>
+      </details>
+    </section>
+  </main>
+</div>
+
+<script>
+  document.documentElement.classList.add('js');
+
+  const links = [...document.querySelectorAll('.progress-nav a')];
+  const byId = new Map(links.map(link => [link.hash.slice(1), link]));
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries.filter(entry => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      links.forEach(link => link.removeAttribute('aria-current'));
+      byId.get(visible.target.id)?.setAttribute('aria-current', 'location');
+    }, { rootMargin: '-20% 0px -65%', threshold: [0, 0.2, 0.6] });
+
+    document.querySelectorAll('main > section[id]').forEach(section => observer.observe(section));
+  }
+</script>

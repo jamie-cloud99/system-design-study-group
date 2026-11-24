@@ -302,11 +302,12 @@
     <a href="#recap">需求與規模</a>
     <a href="#trace">追蹤一則通知</a>
     <a href="#queues">佇列隔離</a>
-    <a href="#reliable">不漏、不重複</a>
+    <a href="#reliable">可靠性邊界</a>
     <a href="#control">設定與限流</a>
     <a href="#real">真實系統</a>
-    <a href="#chain">因果鏈</a>
     <a href="#check">面試模擬</a>
+    <a href="#discussion">討論題</a>
+    <a href="#chain">因果鏈</a>
   </nav>
 
   <main>
@@ -365,19 +366,21 @@
         <p>使用者安裝 App 或註冊時，API 伺服器把聯絡資訊存進資料庫：<strong>使用者表</strong>放 Email 與手機號碼，<strong>裝置表</strong>放裝置 token。一個使用者可有多台裝置，所以一則推播能送到全部。</p>
         <p>書中也強調第三方要能抽換：例如 FCM 在中國無法使用，要改用 Jpush、PushY 之類的服務。</p>
       </details>
-      <div class="analogy">🏗️ 你在 App 按下「允許通知」，其實是在登記「這台裝置可以被叫醒」的憑證。後端存的就是這些憑證。</div>
+      <div class="analogy">🏗️ 按下「允許通知」像是同意收信，建立訂閱才是留下收件地址。Web 的 <code>Notification.requestPermission()</code> 只要求顯示權限；還要透過 Service Worker 的 <code>PushManager.subscribe()</code> 建立訂閱並交給後端。原生 App 另透過平台註冊取得裝置 token。</div>
     </section>
 
     <section id="trace" class="concept-section">
       <p class="eyebrow">先看全貌</p>
       <h2>一則通知會經過哪些元件？</h2>
-      <p>選一種情境，用「下一步」讓小圓點帶你走完。四種結局：成功送達、使用者關閉通知而被丟棄、第三方失敗後重試成功、重複訊息被去重丟棄。</p>
+      <p>選一種情境，用「下一步」讓小圓點帶你走完。六種情境包含理想送達、退訂、暫時失敗、已知重複，以及入隊前當機與回應遺失。先預測結果，再按下一步驗證。</p>
       <div class="demo" id="trace-demo">
         <div class="controls" role="group" aria-label="情境">
           <button type="button" data-sc="ok" aria-pressed="true">成功送達</button>
           <button type="button" data-sc="optout" aria-pressed="false">使用者已關閉</button>
           <button type="button" data-sc="retry" aria-pressed="false">第三方失敗</button>
           <button type="button" data-sc="dup" aria-pressed="false">重複訊息</button>
+          <button type="button" data-sc="crash" aria-pressed="false">入隊前當機</button>
+          <button type="button" data-sc="unknown" aria-pressed="false">回應遺失</button>
         </div>
         <div class="svg-wrap">
           <svg viewBox="0 0 750 270" role="img" aria-label="通知處理流程的元件">
@@ -411,19 +414,31 @@
           <button type="button" id="trace-reset">重來</button>
         </div>
       </div>
-      <p class="takeaway"><strong>一句話：</strong>通知系統的每個元件都在回答：該不該送、送去哪、送失敗怎麼辦。後面幾節逐一拆開。</p>
+      <table>
+        <caption>成功是哪一層？以下狀態需各自的證據。</caption>
+        <thead><tr><th>狀態</th><th>能說明什麼</th></tr></thead>
+        <tbody>
+          <tr><td>API 已受理</td><td>依 API 契約接受請求，不等於已入隊</td></tr>
+          <tr><td>已入隊</td><td>佇列已接受，不等於已發送</td></tr>
+          <tr><td>第三方接受</td><td>第三方收下，不保證裝置顯示</td></tr>
+          <tr><td>裝置收到</td><td>需裝置或平台證據，不等於使用者開啟</td></tr>
+          <tr><td>使用者開啟</td><td>需額外追蹤，不能從發送成功推導</td></tr>
+        </tbody>
+      </table>
+      <p class="meta">實務補充：APNs 送達可能受離線、過期與系統限制影響。「成功送達」動畫假設後續送達條件成立。</p>
+      <p class="takeaway"><strong>一句話：</strong>通知系統的每個元件都在回答：該不該送、送去哪、送失敗怎麼辦。</p>
     </section>
 
     <section id="queues" class="concept-section">
       <p class="eyebrow">現在的問題</p>
       <h2>一個渠道出事，會不會拖垮全部？</h2>
-      <p>假設簡訊服務商掛了。比較「所有通知共用一條佇列」和「每個渠道一條佇列」，按「下一輪」觀察。每輪每個 Worker 取一則；簡訊永遠送不出去。</p>
+      <p>假設簡訊服務商掛了。比較「所有通知共用一條佇列」和「每個渠道一條佇列」，按「下一輪」觀察。此示範假設每輪每個 Worker 取一則、失敗簡訊留在隊首；共用模式只有一個 Worker。真實佇列的重試與排程可能不同。</p>
       <div class="demo" id="queue-demo">
         <div class="controls" role="group" aria-label="佇列模式">
           <button type="button" data-mode="shared" aria-pressed="true">共用一條佇列</button>
           <button type="button" data-mode="split" aria-pressed="false">每個渠道一條</button>
         </div>
-        <div class="svg-wrap"><svg id="queue-svg" viewBox="0 0 570 190" role="img" aria-label="佇列與送達狀態"></svg></div>
+        <div class="svg-wrap"><svg id="queue-svg" viewBox="0 0 570 190" role="img" aria-label="佇列與第三方接受狀態"></svg></div>
         <div class="controls">
           <button type="button" id="queue-next">下一輪</button>
           <button type="button" id="queue-reset">重來</button>
@@ -440,13 +455,13 @@
           <p>多了佇列要維運，通知也不再同步送出，呼叫端拿到的多半只是「已收件」而不是「已送達」（我的推論，書中未明說）。</p>
         </section>
       </div>
-      <p class="takeaway"><strong>一句話：</strong>佇列不只用來緩衝，也用來把故障關在自己的渠道裡。</p>
+      <p class="takeaway"><strong>一句話：</strong>獨立佇列與 Worker 降低跨渠道阻塞；共用資料庫、運算資源或第三方配額仍可能互相影響。</p>
     </section>
 
     <section id="reliable" class="concept-section">
       <p class="eyebrow">現在的問題</p>
       <h2>送失敗要重送，重送又會重複</h2>
-      <p>書中的答案是：不保證恰好一次，分散式系統偶爾會出現重複。做法是去重：事件進來時檢查事件 ID，見過就丟棄，沒見過才送。書中也說這只能減少重複，不能完全消除。拖動滑桿決定同一則訊息被投遞幾次，再切換去重。</p>
+      <p>書中不保證恰好一次。拖動滑桿比較重複投遞與去重；這個簡化示範假設第一次發送成功且完成紀錄已可靠保存，後續依序投遞，並無並行競爭。「見過」不代表「已送完」；回到上方「回應遺失」情境，觀察本地紀錄無法判定的情況。</p>
       <div class="demo" id="dedupe-demo">
         <div class="controls">
           <label for="dd-range">同一則訊息被投遞次數</label>
@@ -464,9 +479,9 @@
         <section aria-label="怎麼做">
           <h3>三道保險</h3>
           <ol class="plain-steps">
-            <li><strong>通知紀錄</strong>：書中原則是通知可以延遲、可以亂序，但絕不能遺失，所以存進通知紀錄資料庫。</li>
-            <li><strong>重試</strong>：送失敗放回佇列，重試預先設定的次數，持續失敗就通知開發者。</li>
-            <li><strong>去重</strong>：以事件 ID 檢查是否處理過。</li>
+            <li><strong>通知紀錄</strong>：保存通知意圖，並有恢復入隊機制。「不漏」的實務目標是不靜默遺失，不保證每則都能顯示。</li>
+            <li><strong>重試</strong>：依錯誤與期限判斷重試；超過上限留下狀態並告警或人工處理。</li>
+            <li><strong>去重</strong>：辨識已完成的發送，並以原子操作協調處理權。粒度依事件、收件者、渠道與目標決定；重試沿用識別值。</li>
           </ol>
         </section>
         <section aria-label="代價">
@@ -475,8 +490,31 @@
         </section>
       </div>
       <details class="more">
+        <summary>實務補充：紀錄與入隊之間仍有當機缺口</summary>
+        <p>只先寫紀錄，當機後仍可能永遠沒入隊。交易式寄件匣（Transactional Outbox）在同一筆資料庫交易保存通知意圖與待發布資料，由背景程序掃描、重試入隊。入隊成功後、標記前當機仍可能重複發布，消費端仍需去重。</p>
+        <pre class="diagram">[交易：通知意圖＋待發布資料]
+          ↓ 提交成功
+[背景掃描、重試] → [佇列] → [Worker]</pre>
+      </details>
+      <details class="more">
+        <summary>實務補充：逾時與去重能保證到哪裡？</summary>
+        <p>先標記完成再發送，當機可能漏送；發送後才標記，當機可能重送。第三方接受後回應遺失，Worker 只能記為結果未知。要看第三方是否有適用的冪等或查詢能力，本地去重不能保證外部發送恰好一次。</p>
+        <p>去重鍵可從「事件＋收件者＋渠道＋目標裝置」討論，再由產品規則決定。只用全域事件 ID，可能擋掉其他收件者或裝置的合法通知。</p>
+      </details>
+      <table>
+        <caption>實務補充：先分類，再決定是否重試</caption>
+        <thead><tr><th>情境</th><th>處理方向</th></tr></thead>
+        <tbody>
+          <tr><td>暫時不可用</td><td>退避並加入隨機抖動（Jitter）</td></tr>
+          <tr><td>第三方限流</td><td>遵守 Retry-After 等指示並降速</td></tr>
+          <tr><td>token 已失效</td><td>停用 token，等待重新註冊</td></tr>
+          <tr><td>請求逾時</td><td>結果未知，評估重複風險與查詢能力</td></tr>
+          <tr><td>驗證碼已過期</td><td>停止發送並記錄過期</td></tr>
+        </tbody>
+      </table>
+      <details class="more">
         <summary>補充（非書中）：重試的等待時間為什麼常常越拉越長？</summary>
-        <p>書中沒有給重試次數或間隔。這是實務上的常見做法：第三方剛恢復時，如果所有失敗的訊息同時重試，又會把它壓垮，所以間隔逐步加長（指數退避）。下圖的秒數是示範用設定；無效 token 之類的錯誤重試也沒用。</p>
+        <p>書中沒有給重試次數或間隔。這是實務上的常見做法：第三方剛恢復時，如果所有失敗的訊息同時重試，又會把它壓垮，所以間隔逐步加長（指數退避）。下圖的秒數是示範用設定，不是 FCM 建議值；實際等待時間以第三方規定為準。無效 token 之類的錯誤重試也沒用。</p>
         <div class="svg-wrap">
           <svg class="narrow" viewBox="0 0 520 170" role="img" aria-label="重試等待時間示意">
             <text x="10" y="24">第 1 次重試</text><rect x="110" y="10" width="20" height="18" rx="4" fill="#245f9e" opacity="0.7"/><text class="dim" x="140" y="24">1 秒</text>
@@ -499,7 +537,7 @@
             <li><strong>使用者設定</strong>：設定表有 <code>user_id</code>、<code>channel</code>、<code>opt_in</code> 三個欄位，每次送出前都檢查。</li>
             <li><strong>限流</strong>：限制單一使用者收到的通知數量，否則使用者可能乾脆全部關閉（呼應第四章）。</li>
             <li><strong>範本</strong>：預先排好版、帶參數的格式（如補貨通知填入商品名與日期，附追蹤連結）。好處是格式一致、減少錯誤、省時間。</li>
-            <li><strong>安全性</strong>：推播 API 用 <code>appKey</code>／<code>appSecret</code> 驗證，只有通過驗證的用戶端能呼叫。</li>
+            <li><strong>安全性</strong>：推播 API 用 <code>appKey</code>／<code>appSecret</code> 驗證可信任的呼叫端。<code>appSecret</code> 必須留在伺服器端，不能嵌入瀏覽器或散布給使用者的 App；前端經自己的後端與使用者授權流程發起請求。</li>
           </ol>
         </section>
         <section aria-label="代價">
@@ -509,7 +547,7 @@
       </div>
       <details class="more">
         <summary>細節：監控與事件追蹤</summary>
-        <p><strong>監控佇列長度</strong>：書中最關鍵的指標是佇列裡等待的通知數，積壓變大代表處理太慢，要加 Worker。<strong>事件追蹤</strong>：接上分析服務，追蹤開啟率、點擊率與互動程度，用來改進策略。</p>
+        <p><strong>監控佇列長度</strong>：書中最關鍵的指標是佇列裡等待的通知數，積壓增加要先找瓶頸。實務上也看最舊訊息等待時間、發送延遲、失敗率、限流率與重試量。Worker 容量不足才擴充；第三方限流時要降速與分批，加 Worker 可能增加錯誤。<strong>事件追蹤</strong>：接上分析服務，追蹤開啟率、點擊率與互動程度，用來改進策略。</p>
       </details>
       <p class="takeaway"><strong>一句話：</strong>能送出不代表該送出；信任一旦被打擾消耗掉，就很難換回來。</p>
     </section>
@@ -518,7 +556,44 @@
       <p class="eyebrow">接上現實</p>
       <h2>真實系統怎麼取捨？</h2>
       <p>書中點名的第三方：推播用 APNs 與 FCM，簡訊用 Twilio、Nexmo，Email 用 SendGrid、Mailchimp。各家的限制與重試規則不同，實作前請以官方文件為準。書中沒有指定佇列技術、重試次數與限流門檻，本頁出現的次數與秒數都是示範用設定。</p>
+      <details class="more">
+        <summary>實務補充的官方來源（2026-11-06 核對）</summary>
+        <p>MDN PushManager（權限與訂閱）、Apple APNs（送達限制）、AWS Transactional Outbox（雙寫缺口）、FCM 錯誤碼（重試分類）。完整官方連結見同名 Markdown 講義的來源段落。本頁不載入外部資源。</p>
+      </details>
       <p class="takeaway"><strong>一句話：</strong>自己的系統負責「送給誰、送幾次、失敗怎麼辦」，最後一哩路交給第三方。</p>
+    </section>
+
+    <section id="check" class="concept-section">
+      <p class="eyebrow">自我檢查</p>
+      <h2>面試模擬</h2>
+      <details>
+        <summary>為什麼每個渠道要用獨立的佇列？</summary>
+        <p>降低跨渠道阻塞，並各自擴充 Worker；共用資料庫、運算資源與第三方配額仍可能互相影響。</p>
+      </details>
+      <details>
+        <summary>為什麼推播 API 要用 appKey／appSecret？</summary>
+        <p>驗證可信任的呼叫端，避免冒用。appSecret 必須留在伺服器端，不能嵌入瀏覽器或使用者的 App。</p>
+      </details>
+      <details>
+        <summary>怎麼避免使用者收到重複通知？</summary>
+        <p>辨識已完成的發送，依事件、收件者、渠道與目標定義粒度。逾時可能是結果未知，本地去重不能保證外部發送恰好一次。</p>
+      </details>
+      <details>
+        <summary>第三方服務掛了，通知會不會遺失？</summary>
+        <p>保存通知意圖，還要有恢復入隊機制，例如 Outbox。依錯誤與期限重試；過期、永久失敗與超過上限都要記錄，必要時告警或人工處理，不靜默遺失。</p>
+      </details>
+      <details>
+        <summary>（延伸，非書中）行銷通知和驗證碼要不要共用佇列？</summary>
+        <p>不要。大量行銷通知會把驗證碼擋在後面。依優先級分開佇列與 Worker。</p>
+      </details>
+    </section>
+    <section id="discussion" class="concept-section">
+      <p class="eyebrow">讀書會討論題</p>
+      <h2>換個情境，你會怎麼判斷？</h2>
+      <details><summary>使用者關掉行銷通知卻還收到，查哪裡？</summary><p>檢查發送前設定查詢、快取更新與是否有入口繞過檢查。排隊期間可能退訂，要送前再查；已交第三方的通知不一定能撤回。</p></details>
+      <details><summary>週年慶推播給 500 萬人，哪裡有壓力？</summary><p>通知服務處理請求，佇列吸收突發；Worker 仍受第三方配額限制。分批與優先級要避免活動通知擋住即時通知。</p></details>
+      <details><summary>同一筆出貨通知收到三次，怎麼查？</summary><p>追查上游重複、發送結果未知後重試，或多台裝置的合法發送。去重粒度依事件、收件者、渠道與目標定義，同一次重試沿用識別值。</p></details>
+      <details><summary>簡訊商維護兩小時，哪些通知能等？</summary><p>行銷可延後；驗證碼須檢查期限與已授權的替代渠道，過期就停止發送並記錄。不能假設所有通知都能自動換渠道。</p></details>
     </section>
 
     <section id="chain" class="concept-section">
@@ -537,30 +612,6 @@
       </table>
     </section>
 
-    <section id="check" class="concept-section">
-      <p class="eyebrow">自我檢查</p>
-      <h2>面試模擬</h2>
-      <details>
-        <summary>為什麼每個渠道要用獨立的佇列？</summary>
-        <p>隔離故障。某個第三方變慢或失敗，只會堆積自己的佇列，其他渠道照常運作；各渠道也可以獨立擴充 Worker 數量。</p>
-      </details>
-      <details>
-        <summary>為什麼推播 API 要用 appKey／appSecret？</summary>
-        <p>防止任何人冒用我們的系統發通知。只有通過驗證的用戶端才能呼叫。</p>
-      </details>
-      <details>
-        <summary>怎麼避免使用者收到重複通知？</summary>
-        <p>書中的答案是無法保證恰好一次，所以用事件 ID 去重：事件進來先檢查，見過就丟棄。這只能減少重複，不能完全消除。</p>
-      </details>
-      <details>
-        <summary>第三方服務掛了，通知會不會遺失？</summary>
-        <p>書中原則是通知可以延遲、亂序，但不能遺失：存進通知紀錄資料庫，失敗時放回佇列重試預先設定的次數，持續失敗就通知開發者。</p>
-      </details>
-      <details>
-        <summary>（延伸，非書中）行銷通知和驗證碼要不要共用佇列？</summary>
-        <p>不要。大量行銷通知會把驗證碼擋在後面。依優先級分開佇列與 Worker。</p>
-      </details>
-    </section>
   </main>
 </div>
 
@@ -612,11 +663,11 @@
       ['upstream', '訂單服務發出事件：「訂單 #1001 已出貨」，呼叫通知 API。'],
       ['server', '通知伺服器驗證呼叫端身份（appKey／appSecret）與格式，並帶上這則通知的事件 ID。'],
       ['settings', '從快取／資料庫查使用者設定與聯絡資訊：有開啟出貨通知（opt_in），有一個 iOS 裝置 token。'],
-      ['log', '寫進通知紀錄資料庫，通知才不會遺失。（書中沒規定紀錄與入佇列的先後，這裡是示意）'],
+      ['log', '保存通知意圖。（順序僅為示意；寫紀錄後、入隊前當機仍需恢復機制，見「入隊前當機」情境）'],
       ['queue', '放進 iOS 推播佇列（每種通知類型一條）。'],
-      ['worker', 'Worker 取出訊息，檢查事件 ID 沒見過，套用範本後呼叫第三方。'],
-      ['provider', 'APNs 收下並轉送。'],
-      ['device', '使用者裝置跳出通知。', 'ok']
+      ['worker', 'Worker 送出前再檢查設定與期限，確認不是已完成的發送，再套用範本呼叫第三方。'],
+      ['provider', 'APNs 接受請求；還不能據此判定裝置收到或顯示。'],
+      ['device', '理想情境下裝置顯示通知；不代表使用者已開啟。', 'ok']
     ],
     optout: [
       ['upstream', '行銷系統發出促銷事件。'],
@@ -625,11 +676,24 @@
     ],
     retry: [
       ['queue', '（接續入佇列之後）iOS 推播佇列有一則待送訊息。'],
-      ['worker', 'Worker 呼叫第三方，對方暫時失敗（逾時）。', 'drop', '這一次沒成功，訊息放回佇列。'],
+      ['worker', 'Worker 呼叫第三方，對方明確回覆暫時不可用。', 'drop', '依第三方規定退避後重試；逾時則另屬結果未知。'],
       ['queue', '訊息放回佇列，預先設定的次數內再試；持續失敗就通知開發者。'],
       ['worker', 'Worker 再次取出並呼叫第三方。'],
       ['provider', '這次第三方收下了。'],
-      ['device', '使用者裝置跳出通知。', 'ok']
+      ['device', '理想情境下裝置顯示通知；不代表使用者已開啟。', 'ok']
+    ],
+    crash: [
+      ['log', '通知紀錄已提交，但服務在入隊前當機。', 'drop', '先預測：誰會把這筆通知補進佇列？'],
+      ['log', '只存紀錄還不夠。實務補法是同一交易保存通知意圖與 Outbox 待發布資料。'],
+      ['queue', '背景發布程序重啟後掃描待發布資料，重試入隊。'],
+      ['worker', '發布仍可能重複，Worker 仍需去重；這不是保證裝置顯示。']
+    ],
+    unknown: [
+      ['worker', 'Worker 發送通知，尚未記錄完成。'],
+      ['provider', '第三方其實已接受，但回應途中斷線。'],
+      ['worker', 'Worker 只知道逾時，不能判定第三方沒有接受。', 'drop', '先預測：重試或不重試，各有什麼風險？'],
+      ['log', '結果未知。重試可能重複，不重試可能漏送；本地去重無法判定這次外部結果。'],
+      ['provider', '檢查第三方是否有適用的冪等或查詢能力，依期限與重複風險決策並留下狀態。']
     ],
     dup: [
       ['queue', '佇列因為上一次沒收到確認，再次投遞同一則訊息。'],
@@ -700,7 +764,7 @@
         const sent = [];
         for (const t of ['P', 'E']) if (q[t].length) { q[t].shift(); done[t]++; sent.push(LABEL[t]); }
         cap.className = 'caption ' + (sent.length ? 'ok' : 'bad');
-        cap.textContent = `第 ${tick} 輪：` + (sent.length ? `送出 ${sent.join('、')}；簡訊佇列自己卡著，不影響其他。` : '推播與 Email 都送完了，只剩簡訊在等服務商恢復。');
+        cap.textContent = `第 ${tick} 輪：` + (sent.length ? `送出 ${sent.join('、')}；此示範中簡訊佇列卡住，推播與 Email 的獨立 Worker 仍能處理。` : '推播與 Email 都送完了，只剩簡訊在等服務商恢復。');
       }
       render();
     }
@@ -721,7 +785,7 @@
           q[t].forEach((u, k) => h += chip(u, 90 + k * 40, y));
         });
       }
-      h += `<text x="10" y="160">已送達：${stat()}</text>`;
+      h += `<text x="10" y="160">第三方接受（示範）：${stat()}</text>`;
       svg.innerHTML = h;
       next.disabled = mode === 'shared' ? !q.all.length : !(q.P.length || q.E.length);
     }
@@ -750,7 +814,7 @@
       svg.innerHTML = h;
       cap.className = 'caption ' + (got > 1 ? 'bad' : 'ok');
       cap.textContent = dedupe
-        ? '事件 ID 只認第一次，之後的投遞都被丟棄，使用者只收到一次。'
+        ? '本示範假設第一次已成功且完成紀錄可靠保存，後續重複被擋掉。結果未知或並行競爭需另處理。'
         : (n > 1 ? `沒有去重：每次投遞都真的送出，使用者被打擾 ${n} 次。` : '只投遞一次，沒問題；但無法保證永遠只有一次。');
     }
     range.addEventListener('input', render);
